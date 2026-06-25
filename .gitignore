@@ -40,9 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Voyle — media catalog (creator drops files here)
-/media
-!/media/.gitkeep
+# Voyle — media catalog (committed to repo for production deployment)
+# /media is NOT ignored so files reach Render
 
 # Voyle — SQLite database
 /prisma/dev.db

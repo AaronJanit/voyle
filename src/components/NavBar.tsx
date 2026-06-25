@@ -36,6 +36,12 @@ export async function NavBar() {
           >
             Generate
           </Link>
+          <Link
+            href="/chat"
+            className="text-[#5f6368] hover:text-[#202124] text-sm transition-colors"
+          >
+            Chat to Voyle
+          </Link>
         </div>
 
         {/* Right: user + logout */}

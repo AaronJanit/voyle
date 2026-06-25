@@ -18,12 +18,16 @@ const PHOTO_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".avif", ".bmp", ".tiff"];
 const GIF_EXTS = [".gif"];
 const VIDEO_EXTS = [".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v"];
 
-function classifyType(ext: string): MediaType | null {
-  const lower = ext.toLowerCase();
-  if (PHOTO_EXTS.includes(lower)) return "photo";
-  if (GIF_EXTS.includes(lower)) return "gif";
-  if (VIDEO_EXTS.includes(lower)) return "video";
+/** Returns the MediaType for a given lowercase extension, or null if unsupported. */
+export function classifyExtension(ext: string): MediaType | null {
+  if (PHOTO_EXTS.includes(ext)) return "photo";
+  if (GIF_EXTS.includes(ext)) return "gif";
+  if (VIDEO_EXTS.includes(ext)) return "video";
   return null;
+}
+
+function classifyType(ext: string): MediaType | null {
+  return classifyExtension(ext.toLowerCase());
 }
 
 function scanDir(dir: string, baseDir: string): MediaItem[] {

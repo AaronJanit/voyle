@@ -17,21 +17,23 @@ export default async function Home() {
       {/* Promo banner */}
       <Link
         href="/generate"
-        className="block bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-pink-600/20 border-b border-neutral-800 hover:from-indigo-600/30 hover:via-purple-600/30 hover:to-pink-600/30 transition-colors"
+        className="block bg-[#1a73e8] hover:bg-[#1765cc] transition-colors"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 text-center">
-          <span className="text-2xl">✨</span>
-          <span className="text-white font-semibold text-sm sm:text-base">
-            Unlimited AI Image!
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-center gap-2 text-center">
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+          </svg>
+          <span className="text-white font-medium text-sm">
+            Create with AI
           </span>
-          <span className="text-neutral-400 text-sm hidden sm:inline">
+          <span className="text-white/80 text-sm hidden sm:inline">
             — generate anything you can imagine →
           </span>
         </div>
       </Link>
 
       {/* Catalog */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
+      <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-6">
         <MediaGrid items={items as MediaItem[]} />
       </main>
     </div>

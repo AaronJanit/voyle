@@ -21,20 +21,36 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Image generation not configured" }, { status: 500 });
   }
 
-  // Parse multipart form data
-  let formData: FormData;
-  try {
-    formData = await request.formData();
-  } catch {
-    return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
+  // Handle both JSON (text-to-image) and multipart/form-data (img2img)
+  const contentType = request.headers.get("content-type") || "";
+  let prompt = "";
+  let imageFile: File | null = null;
+
+  if (contentType.includes("multipart/form-data")) {
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
+    }
+    prompt = (formData.get("prompt") as string)?.trim() || "";
+    const file = formData.get("image") as File | null;
+    if (file && file.size > 0) {
+      imageFile = file;
+    }
+  } else {
+    let body: { prompt?: string };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    prompt = body.prompt?.trim() || "";
   }
 
-  const prompt = (formData.get("prompt") as string)?.trim();
   if (!prompt) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
   }
-
-  const imageFile = formData.get("image") as File | null;
 
   // Build the request body for the Cloudflare Worker
   let workerBody: { prompt: string; image?: string };

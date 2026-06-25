@@ -12,6 +12,7 @@ export interface MediaItem {
   path: string; // relative path from /media, used as URL path
   type: MediaType;
   size: number;
+  isGenerated: boolean; // true if AI-generated (filename starts with "gen-")
 }
 
 const PHOTO_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".avif", ".bmp", ".tiff"];
@@ -63,6 +64,7 @@ function scanDir(dir: string, baseDir: string): MediaItem[] {
         path: relPath,
         type,
         size: stats.size,
+        isGenerated: basename(entry).startsWith("gen-"),
       });
     }
   }

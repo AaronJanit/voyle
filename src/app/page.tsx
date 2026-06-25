@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const items = scanMediaDir();
   const user = await getCurrentUser();
+  const regularItems = items.filter((i) => !i.isGenerated);
+  const generatedItems = items.filter((i) => i.isGenerated);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -33,8 +35,35 @@ export default async function Home() {
       </Link>
 
       {/* Catalog */}
-      <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-6">
-        <MediaGrid items={items as MediaItem[]} />
+      <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-6 space-y-10">
+        {/* Regular media */}
+        <section>
+          <h2 className="text-neutral-500 text-sm font-medium mb-4">
+            {regularItems.length} {regularItems.length === 1 ? "item" : "items"}
+          </h2>
+          <MediaGrid items={regularItems as MediaItem[]} />
+        </section>
+
+        {/* AI-generated media */}
+        {generatedItems.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-neutral-500 text-sm font-medium flex items-center gap-2">
+                <span className="text-neutral-400">✨ AI generated</span>
+                <span className="text-neutral-700">
+                  {generatedItems.length} {generatedItems.length === 1 ? "image" : "images"}
+                </span>
+              </h2>
+              <Link
+                href="/generate"
+                className="text-neutral-400 hover:text-white text-sm transition-colors"
+              >
+                generate more →
+              </Link>
+            </div>
+            <MediaGrid items={generatedItems as MediaItem[]} />
+          </section>
+        )}
       </main>
     </div>
   );

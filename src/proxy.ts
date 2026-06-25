@@ -27,6 +27,20 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Public routes — accessible without auth so media can be shared & embedded.
+  // /p/[id]    — share landing page (OG previews, full media view)
+  // /embed/[id] — iframe-able viewer for third-party sites
+  // /api/oembed — oEmbed discovery endpoint
+  // /api/og     — dynamic OG image generator (used by /p/[id] metadata)
+  if (
+    pathname.startsWith("/p/") ||
+    pathname.startsWith("/embed/") ||
+    pathname.startsWith("/api/oembed") ||
+    pathname.startsWith("/api/og")
+  ) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get(COOKIE_NAME)?.value;
   if (isValidAuthToken(token)) {
     return NextResponse.next();

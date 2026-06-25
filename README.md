@@ -7,6 +7,8 @@ A personal photo catalog + AI chatbot site. Drop media files into a folder, get 
 - **Photo catalog** — auto-scans the `/media` folder for photos, gifs, and videos. Displays them in a responsive masonry grid with a fullscreen lightbox (keyboard navigation, video playback).
 - **AI chatbot** — floating chat widget powered by Ollama Cloud. Streaming responses with a custom funny personality. Conversation history saved to SQLite.
 - **Passcode auth** — single hardcoded passcode (`613`) with a signed HttpOnly cookie. No user accounts.
+- **Shareable photos** — every photo has a public `/p/[id]` URL with full Open Graph / Twitter Card metadata, plus an oEmbed endpoint for rich previews on Discord, Slack, Mastodon, Notion, etc.
+- **Embeddable viewer** — drop a Voyle photo into any site with `<iframe src="https://your-host/embed/[id]">`.
 
 ## Getting started
 

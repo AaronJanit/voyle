@@ -106,16 +106,16 @@ export default function GenerateContent() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero section */}
-      <section className="border-b border-neutral-900 bg-gradient-to-b from-neutral-900/50 to-neutral-950">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
-          <h1 className="text-5xl sm:text-6xl font-bold text-white tracking-tight mb-4">
-            Unlimited AI Image!
+      <section className="border-b border-[#e0e0e0] bg-[#f8f9fa]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 text-center">
+          <h1 className="text-4xl sm:text-5xl font-normal text-[#202124] tracking-tight mb-3">
+            Create with AI
           </h1>
-          <p className="text-neutral-400 text-lg mb-2">
+          <p className="text-[#5f6368] text-base mb-1">
             Type anything. Get a picture. No limits.
           </p>
-          <p className="text-neutral-600 text-sm">
-            powered by Stable Diffusion XL · 100,000 generations per day
+          <p className="text-[#80868b] text-sm">
+            powered by Stable Diffusion XL
           </p>
         </div>
       </section>
@@ -125,7 +125,7 @@ export default function GenerateContent() {
         <form onSubmit={handleGenerate} className="space-y-4">
           {/* Image upload area */}
           <div>
-            <label className="text-neutral-500 text-xs mb-2 block">
+            <label className="text-[#5f6368] text-xs mb-2 block">
               reference image (optional — AI will use it as context)
             </label>
             {uploadedImage ? (
@@ -133,12 +133,12 @@ export default function GenerateContent() {
                 <img
                   src={uploadedImage}
                   alt="Upload preview"
-                  className="max-h-32 rounded-lg border border-neutral-800"
+                  className="max-h-32 rounded-lg border border-[#dadce0]"
                 />
                 <button
                   type="button"
                   onClick={clearUploadedImage}
-                  className="absolute -top-2 -right-2 bg-neutral-800 border border-neutral-700 rounded-full w-6 h-6 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                  className="absolute -top-2 -right-2 bg-white border border-[#dadce0] rounded-full w-6 h-6 flex items-center justify-center text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors shadow-sm"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -150,13 +150,13 @@ export default function GenerateContent() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={loading}
-                className="w-full border-2 border-dashed border-neutral-800 rounded-lg py-6 px-4 text-neutral-600 text-sm hover:border-neutral-600 hover:text-neutral-400 transition-colors flex flex-col items-center gap-2 disabled:opacity-40"
+                className="w-full border-2 border-dashed border-[#dadce0] rounded-lg py-6 px-4 text-[#5f6368] text-sm hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors flex flex-col items-center gap-2 disabled:opacity-40"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span>click to upload an image</span>
-                <span className="text-xs text-neutral-700">jpg, png, gif · max 4MB</span>
+                <span className="text-xs text-[#80868b]">jpg, png, gif · max 4MB</span>
               </button>
             )}
             <input
@@ -177,24 +177,24 @@ export default function GenerateContent() {
               placeholder={uploadedImage ? "describe how to transform the image..." : "describe anything..."}
               autoFocus
               disabled={loading}
-              className="flex-1 px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg text-white text-sm focus:outline-none focus:border-neutral-600 transition-colors placeholder:text-neutral-600"
+              className="flex-1 px-4 py-3 bg-white border border-[#dadce0] rounded-lg text-[#202124] text-sm focus:outline-none focus:border-[#1a73e8] focus:border-2 transition-colors placeholder:text-[#80868b]"
             />
             <button
               type="submit"
               disabled={loading || !prompt.trim()}
-              className="px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm whitespace-nowrap"
+              className="px-6 py-3 bg-[#1a73e8] text-white rounded-lg font-medium hover:bg-[#1765cc] hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm whitespace-nowrap"
             >
               {loading ? "generating..." : "generate"}
             </button>
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && <p className="text-[#d93025] text-sm">{error}</p>}
         </form>
 
         {/* Suggestion chips */}
         {!loading && gallery.length === 0 && (
           <div className="mt-6">
-            <p className="text-neutral-600 text-xs mb-3">try one of these:</p>
+            <p className="text-[#5f6368] text-xs mb-3">try one of these:</p>
             <div className="flex flex-wrap gap-2">
               {[
                 "a neon city at night in the rain",
@@ -206,7 +206,7 @@ export default function GenerateContent() {
                 <button
                   key={s}
                   onClick={() => setPrompt(s)}
-                  className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 rounded-full text-neutral-400 text-xs hover:border-neutral-600 hover:text-white transition-colors"
+                  className="px-3 py-1.5 bg-white border border-[#dadce0] rounded-full text-[#5f6368] text-xs hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors"
                 >
                   {s}
                 </button>
@@ -219,13 +219,13 @@ export default function GenerateContent() {
       {/* Loading state */}
       {loading && (
         <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 pb-8">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-12 flex flex-col items-center gap-4">
+          <div className="bg-[#f8f9fa] border border-[#e0e0e0] rounded-2xl p-12 flex flex-col items-center gap-4">
             <div className="flex gap-1.5">
-              <span className="w-2.5 h-2.5 bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-2.5 h-2.5 bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="w-2.5 h-2.5 bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              <span className="w-2.5 h-2.5 bg-[#1a73e8] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-2.5 h-2.5 bg-[#1a73e8] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-2.5 h-2.5 bg-[#1a73e8] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
-            <p className="text-neutral-500 text-sm">
+            <p className="text-[#5f6368] text-sm">
               {uploadedImage ? "transforming your image..." : "painting your image..."}
             </p>
           </div>
@@ -234,24 +234,24 @@ export default function GenerateContent() {
 
       {/* Gallery of generated images */}
       {gallery.length > 0 && (
-        <section className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 pb-12">
+        <section className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 pb-12">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-neutral-400 text-sm">
+            <h2 className="text-[#5f6368] text-sm">
               {gallery.length} {gallery.length === 1 ? "image" : "images"} generated this session
             </h2>
             <Link
               href="/"
-              className="text-neutral-400 hover:text-white text-sm transition-colors"
+              className="text-[#1a73e8] hover:text-[#1765cc] text-sm font-medium transition-colors"
             >
               view full catalog →
             </Link>
           </div>
 
-          <div className="columns-2 sm:columns-3 md:columns-4 gap-3 space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {gallery.map((img) => (
               <div
                 key={img.filename}
-                className="break-inside-avoid rounded-lg overflow-hidden bg-neutral-900 border border-neutral-800 group relative"
+                className="rounded-lg overflow-hidden bg-white border border-[#e0e0e0] group relative shadow-sm hover:shadow-md transition-shadow"
               >
                 <img
                   src={img.path}
@@ -260,11 +260,11 @@ export default function GenerateContent() {
                 />
                 <div className="p-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-neutral-700 text-[10px] uppercase tracking-wide">
+                    <span className="text-[#80868b] text-[10px] uppercase tracking-wide">
                       {img.mode === "img2img" ? "img → img" : "text → img"}
                     </span>
                   </div>
-                  <p className="text-neutral-400 text-xs line-clamp-2">{img.prompt}</p>
+                  <p className="text-[#5f6368] text-xs line-clamp-2">{img.prompt}</p>
                 </div>
               </div>
             ))}

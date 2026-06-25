@@ -1,6 +1,8 @@
 // Voyle — image generation API
 // POST /api/generate → proxies to Cloudflare Workers AI, saves image to /media
-// Body: { prompt: string }
+// Accepts multipart/form-data with:
+//   - prompt (string, required)
+//   - image (file, optional — for img2img / generation context)
 
 import { NextRequest, NextResponse } from "next/server";
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";
@@ -9,24 +11,48 @@ import { join } from "node:path";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 4MB max upload
+
 export async function POST(request: NextRequest) {
-  let body: { prompt?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const prompt = body.prompt?.trim();
-  if (!prompt) {
-    return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
-  }
-
   const apiUrl = process.env.IMAGE_GEN_API_URL;
   const apiKey = process.env.IMAGE_GEN_API_KEY;
 
   if (!apiUrl || !apiKey) {
     return NextResponse.json({ error: "Image generation not configured" }, { status: 500 });
+  }
+
+  // Parse multipart form data
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
+  }
+
+  const prompt = (formData.get("prompt") as string)?.trim();
+  if (!prompt) {
+    return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+  }
+
+  const imageFile = formData.get("image") as File | null;
+
+  // Build the request body for the Cloudflare Worker
+  let workerBody: { prompt: string; image?: string };
+
+  if (imageFile && imageFile.size > 0) {
+    if (imageFile.size > MAX_IMAGE_SIZE) {
+      return NextResponse.json({ error: "Image too large (max 4MB)" }, { status: 413 });
+    }
+
+    // Convert uploaded image to base64 for the worker
+    const arrayBuffer = await imageFile.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64 = buffer.toString("base64");
+    const mimeType = imageFile.type || "image/jpeg";
+
+    workerBody = { prompt, image: `data:${mimeType};base64,${base64}` };
+  } else {
+    workerBody = { prompt };
   }
 
   // Call the Cloudflare Worker
@@ -38,7 +64,7 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify(workerBody),
     });
   } catch {
     return NextResponse.json({ error: "Failed to reach image generation service" }, { status: 502 });
@@ -59,7 +85,8 @@ export async function POST(request: NextRequest) {
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
   const timestamp = Date.now();
-  const filename = `gen-${slug}-${timestamp}.jpg`;
+  const prefix = imageFile ? "gen-img2img" : "gen";
+  const filename = `${prefix}-${slug}-${timestamp}.jpg`;
   const filepath = join(process.cwd(), "media", filename);
 
   // Ensure /media exists
@@ -76,5 +103,6 @@ export async function POST(request: NextRequest) {
     filename,
     path: `/api/media/file/${filename}`,
     size: imageBuffer.length,
+    mode: imageFile ? "img2img" : "text2img",
   });
 }

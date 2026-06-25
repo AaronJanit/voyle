@@ -1,11 +1,13 @@
 import { scanMediaDir, MediaItem } from "@/lib/media";
 import MediaGrid from "@/components/MediaGrid";
 import LogoutButton from "@/components/LogoutButton";
+import { getCurrentUser } from "@/lib/user";
 
 export const dynamic = "force-dynamic";
 
-export default function Home() {
+export default async function Home() {
   const items = scanMediaDir();
+  const user = await getCurrentUser();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -16,6 +18,11 @@ export default function Home() {
             voyle
           </h1>
           <div className="flex items-center gap-4">
+            {user && (
+              <span className="text-neutral-400 text-sm hidden sm:inline">
+                hi, {user.name}
+              </span>
+            )}
             <span className="text-neutral-600 text-sm hidden sm:inline">
               {items.length} {items.length === 1 ? "item" : "items"}
             </span>

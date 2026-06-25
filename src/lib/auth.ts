@@ -40,22 +40,40 @@ export function verifyToken(token: string): string | null {
   }
 }
 
-/** Create an auth token with an expiry timestamp. */
-export function createAuthToken(): string {
+/** Create an auth token with an expiry timestamp and user email. */
+export function createAuthToken(email: string): string {
   const expiresAt = Date.now() + TOKEN_TTL_MS;
-  return signToken(`auth.${expiresAt}`);
+  // Payload format: "auth.<expiresAt>.<email>" — email is base64url-encoded
+  // to avoid issues with dots in the payload.
+  const emailEncoded = Buffer.from(email).toString("base64url");
+  return signToken(`auth.${expiresAt}.${emailEncoded}`);
 }
 
-/** Verify an auth token and check it hasn't expired. */
-export function isValidAuthToken(token: string | undefined | null): boolean {
-  if (!token) return false;
+/** Verify an auth token and check it hasn't expired. Returns the email if valid. */
+export function verifyAuthToken(token: string | undefined | null): string | null {
+  if (!token) return null;
   const payload = verifyToken(token);
-  if (!payload) return false;
+  if (!payload) return null;
   const parts = payload.split(".");
-  if (parts.length !== 2 || parts[0] !== "auth") return false;
+  if (parts.length !== 3 || parts[0] !== "auth") return null;
   const expiresAt = Number(parts[1]);
-  if (!expiresAt || Date.now() > expiresAt) return false;
-  return true;
+  if (!expiresAt || Date.now() > expiresAt) return null;
+  try {
+    const email = Buffer.from(parts[2], "base64url").toString("utf-8");
+    return email;
+  } catch {
+    return null;
+  }
+}
+
+/** Check if an auth token is valid (backwards-compatible boolean check). */
+export function isValidAuthToken(token: string | undefined | null): boolean {
+  return verifyAuthToken(token) !== null;
+}
+
+/** Extract the user's email from the auth token. Returns null if invalid. */
+export function getAuthEmail(token: string | undefined | null): string | null {
+  return verifyAuthToken(token);
 }
 
 export { COOKIE_NAME };

@@ -96,6 +96,29 @@ prisma/
 media/                       # drop files here (gitignored)
 ```
 
+## TLS / content filter note (Techloq)
+
+This machine runs a **Techloq** HTTPS content filter that intercepts all TLS
+traffic with its own root CA (`CN=techloq-CA`). The CA lives in the Windows
+trust store but **not** in Node.js's bundled CA list, so every `fetch()` /
+Supabase / Ollama call from Node fails with:
+
+```
+unable to get local issuer certificate (UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
+```
+
+A copy of the CA is committed at `techloq-ca.pem`, and `npm run dev` /
+`npm run start` set `NODE_EXTRA_CA_CERTS=./techloq-ca.pem` via `cross-env` so
+Node trusts the filter's certificates.
+
+If the CA changes (e.g. after a Techloq update), regenerate the PEM:
+
+```powershell
+$cert = Get-ChildItem Cert:\LocalMachine\Root | Where-Object { $_.Subject -like "*techloq-CA*" } | Select-Object -First 1
+$pem = "-----BEGIN CERTIFICATE-----`n" + [Convert]::ToBase64String($cert.RawData, [Base64FormattingOptions]::InsertLineBreaks) + "`n-----END CERTIFICATE-----`n"
+$pem | Set-Content -Path techloq-ca.pem -Encoding ASCII
+```
+
 ## Tech stack
 
 - Next.js 16 (App Router, Turbopack)

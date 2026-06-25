@@ -30,6 +30,8 @@ Required variables:
 - `OLLAMA_BASE_URL` — your Ollama Cloud endpoint URL
 - `OLLAMA_API_KEY` — your Ollama Cloud API key
 - `OLLAMA_MODEL` — model name (e.g. `llama3.1`, `qwen2.5`)
+- `SUPABASE_URL` — your Supabase project URL (server-only, no `NEXT_PUBLIC_` prefix so it's read at runtime, not frozen at build time)
+- `SUPABASE_KEY` — your Supabase publishable key
 
 ### 3. Set up the database
 

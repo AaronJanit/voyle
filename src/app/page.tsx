@@ -1,8 +1,8 @@
 import { scanMediaDir, MediaItem } from "@/lib/media";
 import MediaGrid from "@/components/MediaGrid";
-import LogoutButton from "@/components/LogoutButton";
-import GenerateWidget from "@/components/GenerateWidget";
+import { NavBar } from "@/components/NavBar";
 import { getCurrentUser } from "@/lib/user";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -12,26 +12,23 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Nav bar */}
-      <header className="sticky top-0 z-30 bg-neutral-950/80 backdrop-blur border-b border-neutral-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white tracking-tight lowercase">
-            voyle
-          </h1>
-          <div className="flex items-center gap-4">
-            {user && (
-              <span className="text-neutral-400 text-sm hidden sm:inline">
-                hi, {user.name}
-              </span>
-            )}
-            <GenerateWidget />
-            <span className="text-neutral-600 text-sm hidden sm:inline">
-              {items.length} {items.length === 1 ? "item" : "items"}
-            </span>
-            <LogoutButton />
-          </div>
+      <NavBar />
+
+      {/* Promo banner */}
+      <Link
+        href="/generate"
+        className="block bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-pink-600/20 border-b border-neutral-800 hover:from-indigo-600/30 hover:via-purple-600/30 hover:to-pink-600/30 transition-colors"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 text-center">
+          <span className="text-2xl">✨</span>
+          <span className="text-white font-semibold text-sm sm:text-base">
+            Unlimited AI Image!
+          </span>
+          <span className="text-neutral-400 text-sm hidden sm:inline">
+            — generate anything you can imagine →
+          </span>
         </div>
-      </header>
+      </Link>
 
       {/* Catalog */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">

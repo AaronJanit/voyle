@@ -33,8 +33,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Check email exists in the Supabase users table
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  // NOTE: These are server-only env vars (no NEXT_PUBLIC_ prefix) so they're
+  // read at runtime, not inlined at build time. NEXT_PUBLIC_ vars get frozen
+  // into the bundle during `next build` — if the build environment doesn't
+  // have them, they're baked in as undefined forever.
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
     return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });

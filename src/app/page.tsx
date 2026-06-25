@@ -1,6 +1,7 @@
 import { scanMediaDir, MediaItem } from "@/lib/media";
 import MediaGrid from "@/components/MediaGrid";
 import LogoutButton from "@/components/LogoutButton";
+import GenerateWidget from "@/components/GenerateWidget";
 import { getCurrentUser } from "@/lib/user";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export default async function Home() {
                 hi, {user.name}
               </span>
             )}
+            <GenerateWidget />
             <span className="text-neutral-600 text-sm hidden sm:inline">
               {items.length} {items.length === 1 ? "item" : "items"}
             </span>

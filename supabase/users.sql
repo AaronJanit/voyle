@@ -28,5 +28,14 @@ CREATE POLICY "Anyone can update users" ON users
 CREATE POLICY "Anyone can delete users" ON users
   FOR DELETE USING (true);
 
+-- IP pinning columns (added for cybersecurity hardening).
+-- first_login_ip is set the first time a user logs in successfully; every
+-- subsequent login must originate from the same IP. ip_locked_at records
+-- when the binding happened (audit only). To reset a user's IP (e.g. they
+-- changed ISP), an admin clears first_login_ip back to NULL in the Table
+-- Editor — the next login re-binds it.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS first_login_ip TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_locked_at TIMESTAMPTZ;
+
 -- Example: insert your first user
 -- INSERT INTO users (email, name) VALUES ('someone@example.com', 'Someone');

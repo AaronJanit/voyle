@@ -1,8 +1,15 @@
 // Voyle — get current user from auth cookie + Supabase
 // Used in Server Components to get the logged-in user's name.
+//
+// On every request we re-validate three things:
+//   1. The auth cookie is a valid HMAC-signed token (getAuthEmail).
+//   2. The email still exists in the Supabase users table.
+//   3. The request originates from the same IP that was bound at first login.
+// If any check fails, the caller treats the request as unauthenticated.
 
 import { cookies } from "next/headers";
 import { COOKIE_NAME, getAuthEmail } from "@/lib/auth";
+import { getServerIP } from "@/lib/ip";
 import { createClient } from "@supabase/supabase-js";
 
 export interface CurrentUser {
@@ -24,10 +31,21 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const supabase = createClient(supabaseUrl, supabaseKey);
   const { data } = await supabase
     .from("users")
-    .select("email, name")
+    .select("email, name, first_login_ip")
     .eq("email", email)
     .single();
 
   if (!data) return null;
+
+  // IP pinning: if an IP is bound, the current request must originate from it.
+  // This defeats cookie theft from a different network. If no IP is bound yet
+  // (legacy user who never logged in since the feature shipped), allow through.
+  if (data.first_login_ip) {
+    const currentIP = await getServerIP();
+    if (!currentIP || currentIP !== data.first_login_ip) {
+      return null;
+    }
+  }
+
   return { email: data.email, name: data.name };
 }

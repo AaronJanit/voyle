@@ -1,5 +1,5 @@
 import { scanMediaDir, MediaItem } from "@/lib/media";
-import MediaGrid from "@/components/MediaGrid";
+import MediaView from "@/components/MediaView";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ export default async function Home() {
       <main className="flex-1 max-w-[1600px] w-full px-4 sm:px-8 py-6 space-y-10">
         {/* Regular media */}
         <section>
-          <MediaGrid items={regularItems as MediaItem[]} />
+          <MediaView items={regularItems as MediaItem[]} />
         </section>
 
         {/* AI-generated media */}
@@ -51,7 +51,7 @@ export default async function Home() {
                 Generate more
               </Link>
             </div>
-            <MediaGrid items={generatedItems as MediaItem[]} />
+            <MediaView items={generatedItems as MediaItem[]} />
           </section>
         )}
       </main>

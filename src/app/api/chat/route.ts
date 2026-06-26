@@ -5,7 +5,7 @@
 
 import { NextRequest } from "next/server";
 import { streamChat, parseOllamaStream, ChatMessage } from "@/lib/ollama";
-import { SYSTEM_PROMPT } from "@/lib/prompts";
+import { getSystemPrompt } from "@/lib/prompts";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -24,9 +24,12 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "No messages provided" }, { status: 400 });
   }
 
+  // Load the system prompt (Supabase-backed with hard-coded fallback)
+  const systemPrompt = await getSystemPrompt();
+
   // Prepend the system prompt
   const fullMessages: ChatMessage[] = [
-    { role: "system", content: SYSTEM_PROMPT },
+    { role: "system", content: systemPrompt },
     ...userMessages,
   ];
 

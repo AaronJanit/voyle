@@ -1,10 +1,41 @@
 // Voyle — auth API route
 // POST with { email, code } → checks email exists in Supabase users table
-// AND passcode matches → sets signed HttpOnly cookie with email, returns success.
+// AND passcode matches AND (if bound) the request originates from the same IP
+// that first signed in → sets signed HttpOnly cookie with email, returns success.
+//
+// Security ordering (important):
+//   1. Email check FIRST. If the email is NOT in the users table, trip the
+//      global lockdown flag (site_lockdown.locked = true) and reject. This
+//      happens regardless of whether the passcode is correct.
+//   2. Passcode check against AUTH_CODE.
+//   3. IP pinning — first login binds the IP; subsequent logins must match.
 
 import { NextRequest, NextResponse } from "next/server";
 import { COOKIE_NAME, createAuthToken } from "@/lib/auth";
+import { getRequestIP } from "@/lib/ip";
 import { createClient } from "@supabase/supabase-js";
+
+/** Flip the global lockdown flag on. Called when a bad email is attempted. */
+async function triggerLockdown(
+  supabaseUrl: string,
+  supabaseKey: string,
+  email: string
+): Promise<void> {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    await supabase
+      .from("site_lockdown")
+      .update({
+        locked: true,
+        triggered_by: email,
+        triggered_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", 1);
+  } catch {
+    // Swallow — the bad-email attempt is still rejected below.
+  }
+}
 
 export async function POST(request: NextRequest) {
   let body: { email?: string; code?: string };
@@ -16,27 +47,13 @@ export async function POST(request: NextRequest) {
 
   const email = body.email?.trim().toLowerCase();
   const submittedCode = body.code?.trim();
-  const expectedCode = process.env.AUTH_CODE;
-
-  if (!expectedCode) {
-    return NextResponse.json({ error: "Server auth not configured" }, { status: 500 });
-  }
-
-  // Check passcode
-  if (!submittedCode || submittedCode !== expectedCode) {
-    return NextResponse.json({ error: "Wrong passcode" }, { status: 401 });
-  }
 
   // Check email is provided
   if (!email) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
 
-  // Check email exists in the Supabase users table
-  // NOTE: These are server-only env vars (no NEXT_PUBLIC_ prefix) so they're
-  // read at runtime, not inlined at build time. NEXT_PUBLIC_ vars get frozen
-  // into the bundle during `next build` — if the build environment doesn't
-  // have them, they're baked in as undefined forever.
+  // Supabase config (server-only env vars — read at runtime, not build time).
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_KEY;
 
@@ -44,16 +61,57 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
   }
 
+  // --- Step 1: email allowlist check (BEFORE passcode) -------------------
+  // If the email isn't in the users table, trip the global lockdown and
+  // reject. This fires regardless of passcode correctness.
   const supabase = createClient(supabaseUrl, supabaseKey);
   const { data, error } = await supabase
     .from("users")
-    .select("email, name")
+    .select("email, name, first_login_ip")
     .eq("email", email)
     .single();
 
   if (error || !data) {
+    await triggerLockdown(supabaseUrl, supabaseKey, email);
+    // Deliberately generic message — don't reveal the lockdown was tripped.
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  // --- Step 2: passcode check -------------------------------------------
+  const expectedCode = process.env.AUTH_CODE;
+  if (!expectedCode) {
+    return NextResponse.json({ error: "Server auth not configured" }, { status: 500 });
+  }
+  if (!submittedCode || submittedCode !== expectedCode) {
+    return NextResponse.json({ error: "Wrong passcode" }, { status: 401 });
+  }
+
+  // --- Step 3: IP pinning -----------------------------------------------
+  const clientIP = getRequestIP(request);
+
+  if (!clientIP) {
+    // Strict mode: if we can't determine the IP, refuse to authenticate.
     return NextResponse.json(
-      { error: "This email is not on the list" },
+      { error: "Unable to verify network" },
+      { status: 403 }
+    );
+  }
+
+  if (!data.first_login_ip) {
+    // First successful login for this user — bind the IP.
+    await supabase
+      .from("users")
+      .update({
+        first_login_ip: clientIP,
+        ip_locked_at: new Date().toISOString(),
+      })
+      .eq("email", email);
+  } else if (data.first_login_ip !== clientIP) {
+    // IP mismatch — reject. Do NOT trigger lockdown (this is likely a
+    // legitimate user on a new network, not an attack). Admin resets the
+    // bound IP manually via the Supabase Table Editor.
+    return NextResponse.json(
+      { error: "Login restricted to the original device network" },
       { status: 403 }
     );
   }

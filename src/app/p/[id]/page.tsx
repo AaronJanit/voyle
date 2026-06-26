@@ -1,15 +1,16 @@
 // Voyle — shareable photo page
-// Public landing page for a single media item with rich Open Graph / Twitter
-// metadata so links preview beautifully on Twitter, Discord, Slack, iMessage,
-// Mastodon, etc. Anyone with the URL can view it (no auth required).
+// Landing page for a single media item with rich Open Graph / Twitter
+// metadata so links preview beautifully. Now auth-gated: unauthenticated
+// visitors are redirected to /login (media only loads behind a session).
 //
 // The [id] param is the URL-encoded relative path inside /media.
 
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import ShareClient from "./ShareClient";
 import { scanMediaDir } from "@/lib/media";
+import { getCurrentUser } from "@/lib/user";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +88,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function PhotoPage({ params }: PageProps) {
+  // Auth gate — media only loads behind a valid session.
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
   const { id } = await params;
   const item = findItem(id);
   if (!item) notFound();

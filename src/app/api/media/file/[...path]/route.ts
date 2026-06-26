@@ -1,12 +1,17 @@
 // Voyle — media file server
 // GET /api/media/file/[...path] → streams a file from the /media folder.
 // This keeps media behind the auth middleware (files are outside public/).
+//
+// Defense-in-depth: even though src/proxy.ts gates this route, we re-check the
+// auth cookie here so media stays protected if the middleware is ever
+// misconfigured, bypassed, or refactored.
 
 import { NextRequest, NextResponse } from "next/server";
 import { createReadStream } from "node:fs";
 import { join, resolve } from "node:path";
 import { stat } from "node:fs/promises";
 import { Readable } from "node:stream";
+import { COOKIE_NAME, isValidAuthToken } from "@/lib/auth";
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -26,9 +31,15 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  // Defense-in-depth: require a valid auth cookie regardless of middleware.
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+  if (!isValidAuthToken(token)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { path: pathSegments } = await params;
   const relPath = pathSegments.join("/");
 

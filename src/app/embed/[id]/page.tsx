@@ -1,14 +1,13 @@
 // Voyle — embeddable iframe viewer
-// Public route that renders a single media item with the absolute minimum
-// chrome. Designed to be embedded in other sites via <iframe>. No auth, no
-// chat widget, no nav, no analytics. Just the image/video + a tiny credit.
-//
-// Security headers set to allow framing from any origin.
+// Renders a single media item with the absolute minimum chrome. Designed to
+// be embedded in other sites via <iframe>. Now auth-gated: unauthenticated
+// visitors are redirected to /login (media only loads behind a session).
 
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { scanMediaDir } from "@/lib/media";
+import { getCurrentUser } from "@/lib/user";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +31,10 @@ function findItem(id: string) {
 }
 
 export default async function EmbedPage({ params }: PageProps) {
+  // Auth gate — media only loads behind a valid session.
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
   const { id } = await params;
   const item = findItem(id);
   if (!item) notFound();

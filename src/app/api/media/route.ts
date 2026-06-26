@@ -1,21 +1,38 @@
 // Voyle — media list + upload API
 // GET  /api/media → returns JSON array of all media items in /media folder.
 // POST /api/media → accepts multipart file upload(s), saves to /media folder.
+//
+// Defense-in-depth: even though src/proxy.ts gates these routes, we re-check
+// the auth cookie here so media stays protected if the middleware is ever
+// misconfigured, bypassed, or refactored.
 
 import { NextRequest, NextResponse } from "next/server";
 import { scanMediaDir, classifyExtension } from "@/lib/media";
+import { COOKIE_NAME, isValidAuthToken } from "@/lib/auth";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join, extname, basename } from "node:path";
 import { randomBytes } from "node:crypto";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Defense-in-depth: require a valid auth cookie regardless of middleware.
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+  if (!isValidAuthToken(token)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const items = scanMediaDir();
   return NextResponse.json(items);
 }
 
 export async function POST(request: NextRequest) {
+  // Defense-in-depth: require a valid auth cookie regardless of middleware.
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+  if (!isValidAuthToken(token)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const formData = await request.formData();
   const files = formData.getAll("files").filter(
     (f): f is File => f instanceof File

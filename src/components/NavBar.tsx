@@ -28,6 +28,24 @@ export async function NavBar() {
             </svg>
             <span className="text-[#5f6368]">Photos</span>
           </Link>
+          <Link
+            href="/generate"
+            className="text-[#5f6368] hover:text-[#202124] text-sm transition-colors"
+          >
+            Generate
+          </Link>
+          <Link
+            href="/chat"
+            className="text-[#5f6368] hover:text-[#202124] text-sm transition-colors"
+          >
+            Chat to Voyle
+          </Link>
+          <Link
+            href="/spencer"
+            className="text-[#5f6368] hover:text-[#202124] text-sm transition-colors"
+          >
+            Chat to Spencer
+          </Link>
         </div>
 
         {/* Right: user + logout */}

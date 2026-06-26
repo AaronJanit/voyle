@@ -11,15 +11,14 @@ export const metadata = {
 
 export default function LockedPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-400">
-      <div className="text-center px-6">
-        <h1 className="text-2xl font-semibold text-neutral-200 mb-2">
-          This site is temporarily unavailable.
-        </h1>
-        <p className="text-sm text-neutral-500">
-          Please check back later.
-        </p>
-      </div>
+    <main className="min-h-screen flex flex-col items-center justify-center bg-neutral-950 px-4 text-center">
+      <div className="mb-6 text-5xl">🔌</div>
+      <h1 className="text-3xl font-semibold text-neutral-200 mb-2">
+        Unplugged Site
+      </h1>
+      <p className="text-sm text-neutral-500 max-w-xs">
+        This site has been disconnected. Please contact the administrator.
+      </p>
     </main>
   );
 }

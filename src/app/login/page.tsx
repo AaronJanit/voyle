@@ -3,17 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+type ViewState = "form" | "loading" | "unplugged";
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [view, setView] = useState<ViewState>("form");
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    setView("loading");
 
     try {
       const res = await fetch("/api/auth", {
@@ -25,17 +27,43 @@ export default function LoginPage() {
       if (res.ok) {
         router.push("/");
         router.refresh();
-      } else {
-        const data = await res.json();
-        setError(data.error || "Something went wrong");
+        return;
       }
+
+      // Any failed login → the site is taken down behind the scenes.
+      // Show the "Unplugged Site" screen.
+      setView("unplugged");
     } catch {
-      setError("Something went wrong. Try again.");
-    } finally {
-      setLoading(false);
+      setView("unplugged");
     }
   }
 
+  // --- Full-page spinner (shown during every login attempt) --------------
+  if (view === "loading") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
+        <div className="w-10 h-10 border-4 border-[#dadce0] border-t-[#1a73e8] rounded-full animate-spin" />
+        <p className="mt-6 text-[#5f6368] text-sm">Signing you in…</p>
+      </div>
+    );
+  }
+
+  // --- Unplugged Site screen (shown when login fails) -------------------
+  if (view === "unplugged") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-950 px-4 text-center">
+        <div className="mb-6 text-5xl">🔌</div>
+        <h1 className="text-3xl font-semibold text-neutral-200 mb-2">
+          Unplugged Site
+        </h1>
+        <p className="text-sm text-neutral-500 max-w-xs">
+          This site has been disconnected. Please contact the administrator.
+        </p>
+      </div>
+    );
+  }
+
+  // --- Login form -------------------------------------------------------
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <div className="w-full max-w-sm">
@@ -72,7 +100,6 @@ export default function LoginPage() {
               autoComplete="email"
               autoFocus
               className="peer w-full px-3.5 pt-4 pb-2 bg-transparent border border-[#dadce0] rounded text-[#202124] text-sm focus:outline-none focus:border-[#1a73e8] focus:border-2 transition-colors placeholder:text-transparent"
-              disabled={loading}
               required
             />
             <label className="absolute left-3 top-3.5 text-[#5f6368] text-sm transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[#1a73e8] peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs">
@@ -88,7 +115,6 @@ export default function LoginPage() {
               onChange={(e) => setCode(e.target.value)}
               placeholder=" "
               className="peer w-full px-3.5 pt-4 pb-2 bg-transparent border border-[#dadce0] rounded text-[#202124] text-sm focus:outline-none focus:border-[#1a73e8] focus:border-2 transition-colors placeholder:text-transparent"
-              disabled={loading}
               required
             />
             <label className="absolute left-3 top-3.5 text-[#5f6368] text-sm transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[#1a73e8] peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs">
@@ -103,10 +129,10 @@ export default function LoginPage() {
           <div className="flex justify-end pt-2">
             <button
               type="submit"
-              disabled={loading || !code || !email}
+              disabled={!code || !email}
               className="px-6 py-2.5 bg-[#1a73e8] text-white rounded text-sm font-medium hover:bg-[#1765cc] hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              Sign in
             </button>
           </div>
         </form>

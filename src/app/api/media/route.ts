@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scanMediaDir, classifyExtension } from "@/lib/media";
 import { COOKIE_NAME, isValidAuthToken } from "@/lib/auth";
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir, stat } from "node:fs/promises";
 import { join, extname, basename } from "node:path";
 import { randomBytes } from "node:crypto";
 
@@ -33,7 +33,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to parse upload. The file may be too large." },
+      { status: 413 }
+    );
+  }
+
   const files = formData.getAll("files").filter(
     (f): f is File => f instanceof File
   );
@@ -68,13 +77,11 @@ export async function POST(request: NextRequest) {
     let filename = file.name;
     let attempts = 0;
     while (attempts < 100) {
-      const probe = await import("node:fs/promises").then((m) =>
-        m.stat(join(mediaDir, filename)).then(
-          () => true,
-          () => false
-        )
+      const exists = await stat(join(mediaDir, filename)).then(
+        () => true,
+        () => false
       );
-      if (!probe) break;
+      if (!exists) break;
       const suffix = randomBytes(3).toString("hex");
       filename = `${base}-${suffix}${ext}`;
       attempts++;

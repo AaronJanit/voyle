@@ -26,8 +26,8 @@ export default function ChatWidget() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  // Don't render on the login page (after all hooks to avoid hook order issues)
-  if (pathname === "/login") return null;
+  // Don't render on the login page or dedicated chat pages (after all hooks to avoid hook order issues)
+  if (pathname === "/login" || pathname === "/chat" || pathname === "/spencer") return null;
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault();

@@ -31,18 +31,19 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const supabase = createClient(supabaseUrl, supabaseKey);
   const { data } = await supabase
     .from("users")
-    .select("email, name, first_login_ip")
+    .select("*")
     .eq("email", email)
     .single();
 
   if (!data) return null;
 
   // IP pinning: if an IP is bound, the current request must originate from it.
-  // This defeats cookie theft from a different network. If no IP is bound yet
-  // (legacy user who never logged in since the feature shipped), allow through.
-  if (data.first_login_ip) {
+  // This defeats cookie theft from a different network. If the first_login_ip
+  // column doesn't exist yet (migration not run) or has no value, allow through.
+  const boundIP: string | null = data.first_login_ip ?? null;
+  if (boundIP) {
     const currentIP = await getServerIP();
-    if (!currentIP || currentIP !== data.first_login_ip) {
+    if (!currentIP || currentIP !== boundIP) {
       return null;
     }
   }

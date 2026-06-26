@@ -64,10 +64,13 @@ export async function POST(request: NextRequest) {
   // --- Step 1: email allowlist check (BEFORE passcode) -------------------
   // If the email isn't in the users table, trip the global lockdown and
   // reject. This fires regardless of passcode correctness.
+  // We select "*" so the query doesn't break if the first_login_ip column
+  // hasn't been added yet (migration not run). first_login_ip will simply
+  // be undefined, which the IP-pinning step handles gracefully.
   const supabase = createClient(supabaseUrl, supabaseKey);
   const { data, error } = await supabase
     .from("users")
-    .select("email, name, first_login_ip")
+    .select("*")
     .eq("email", email)
     .single();
 

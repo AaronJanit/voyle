@@ -3,7 +3,7 @@
 import { MediaItem } from "@/lib/media";
 import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
-import { PlusSquare } from "lucide-react";
+import { Upload } from "lucide-react";
 import { CurrentUser } from "@/lib/user";
 import { ChannelInfo } from "@/lib/channel";
 
@@ -200,7 +200,7 @@ export default function YouTubeGrid({
           aria-label="Upload"
           title="Upload"
         >
-          <PlusSquare className="w-5 h-5" />
+          <Upload className="w-5 h-5" />
         </button>
       </div>
 

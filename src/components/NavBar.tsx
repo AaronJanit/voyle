@@ -85,7 +85,7 @@ export default function NavBar() {
           </svg>
           <span className="text-lg font-semibold tracking-tight">voyle</span>
           <span className="text-[10px] text-[color:var(--yt-text-secondary)] self-start mt-1">
-            TV
+            YT
           </span>
         </Link>
       </div>

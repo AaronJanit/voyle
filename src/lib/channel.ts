@@ -65,10 +65,31 @@ export function channelInfoForName(name: string): ChannelInfo {
   };
 }
 
-/** Create a Supabase client using server-only env vars. */
-function getSupabase() {
+/**
+ * Supabase client for READS — uses the publishable (anon) key.
+ * RLS allows SELECT for everyone, so this is safe to expose conceptually
+ * even though we never actually send it to the browser (it's server-only).
+ */
+function getReadClient() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
+
+/**
+ * Supabase client for WRITES — uses the service-role key, which bypasses
+ * RLS. This is the only way the publishable key can be blocked from
+ * inserting into the `media` table (consistent with lockdown.sql and
+ * system_prompt.sql, which also write with the service-role key).
+ *
+ * If SUPABASE_SERVICE_ROLE_KEY is not configured, writes will silently
+ * no-op (logged as a warning) so uploads still succeed — they just
+ * won't be attributed.
+ */
+function getWriteClient() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   return createClient(url, key);
 }
@@ -83,9 +104,11 @@ export async function recordUpload(
   email: string,
   name: string
 ): Promise<void> {
-  const supabase = getSupabase();
+  const supabase = getWriteClient();
   if (!supabase) {
-    console.warn("recordUpload: Supabase not configured, skipping attribution");
+    console.warn(
+      "recordUpload: SUPABASE_SERVICE_ROLE_KEY not configured, skipping attribution"
+    );
     return;
   }
 
@@ -103,6 +126,8 @@ export async function recordUpload(
 
     if (error) {
       console.error("recordUpload: Supabase error:", error.message);
+    } else {
+      console.log(`recordUpload: attributed ${filePath} to ${name}`);
     }
   } catch (e) {
     console.error("recordUpload: unexpected error:", e);
@@ -116,7 +141,7 @@ export async function recordUpload(
 export async function getUploader(
   filePath: string
 ): Promise<{ email: string; name: string } | null> {
-  const supabase = getSupabase();
+  const supabase = getReadClient();
   if (!supabase) return null;
 
   try {
@@ -145,7 +170,7 @@ export async function getAttributionMap(
   const result = new Map<string, ChannelInfo>();
   if (paths.length === 0) return result;
 
-  const supabase = getSupabase();
+  const supabase = getReadClient();
   if (!supabase) return result;
 
   try {
@@ -172,7 +197,7 @@ export async function getAttributionMap(
  * that still exist on disk are returned.
  */
 export async function getChannelContent(name: string): Promise<MediaItem[]> {
-  const supabase = getSupabase();
+  const supabase = getReadClient();
   if (!supabase) return [];
 
   try {
@@ -202,7 +227,7 @@ export async function getChannelContent(name: string): Promise<MediaItem[]> {
 export async function listChannels(): Promise<
   { name: string; count: number }[]
 > {
-  const supabase = getSupabase();
+  const supabase = getReadClient();
   if (!supabase) return [];
 
   try {

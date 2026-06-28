@@ -11,7 +11,8 @@ import { Bell, X, BadgeCheck, Sparkles } from "lucide-react";
  * - Slides up from the bottom-right corner, above the page content.
  * - Appears a few seconds after the page loads (with a small bell trigger
  *   pill so the user can re-open it after dismissing).
- * - Re-shows on every page load / navigation.
+ * - Shows once per browser session (sessionStorage), then stays dismissed
+ *   until the tab/browser is closed and reopened.
  * - Styled to match YouTube: white surface, 12px radius, subtle shadow,
  *   red Subscribe CTA, Roboto font, verified-badge channel row.
  */
@@ -32,8 +33,8 @@ export default function MakeYourOwnPopup() {
     setHydrated(true);
   }, []);
 
-  // Re-trigger on every page navigation so the popup shows up on each
-  // page load (or whenever the user navigates to a new route).
+  // Show the popup once per browser session. sessionStorage is cleared
+  // when the tab/browser closes, so it reappears next visit.
   useEffect(() => {
     if (!hydrated || hide) {
       setOpen(false);
@@ -41,9 +42,27 @@ export default function MakeYourOwnPopup() {
       return;
     }
 
-    // Reset state on every navigation.
-    setOpen(false);
-    setTriggerVisible(false);
+    // Already shown (or dismissed) this session — don't auto-open again.
+    let shownThisSession = false;
+    try {
+      shownThisSession =
+        sessionStorage.getItem("voyle:popup-shown") === "1";
+    } catch {
+      /* ignore */
+    }
+    if (shownThisSession) {
+      setOpen(false);
+      setTriggerVisible(false);
+      return;
+    }
+
+    // Mark as shown for this session immediately so navigations between
+    // pages don't re-trigger it.
+    try {
+      sessionStorage.setItem("voyle:popup-shown", "1");
+    } catch {
+      /* ignore */
+    }
 
     // Open after a short delay so it feels like a real YouTube nudge.
     const openTimer = window.setTimeout(() => {

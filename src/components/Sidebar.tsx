@@ -2,121 +2,110 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import LogoutButton from "@/components/LogoutButton";
+import { useSidebar } from "./SidebarContext";
 
-interface SidebarUser {
-  name: string;
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
 }
 
-export default function Sidebar({ user }: { user?: SidebarUser }) {
+const HOME_ICON = (
+  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
+    <path d="M12 4.33l7 6.12V20h-4v-6H9v6H5v-9.55l7-6.12M12 3 4 10v10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h4v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V10l-8-7z" />
+  </svg>
+);
+const GENERATE_ICON = (
+  <svg
+    viewBox="0 0 24 24"
+    className="w-6 h-6"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.08A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.08A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.08A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.08A1.7 1.7 0 0 0 19.4 15z" />
+  </svg>
+);
+const CHAT_ICON = (
+  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
+    <path d="M11 7l6 3.5-6 3.5V7zm7 13H4V6H3v15h15v-1zm3-2H6V3h15v15zM7 4v13h13V4H7z" />
+  </svg>
+);
+
+/* Only routes that actually exist are listed. Each one has a working
+ * page behind it:
+ *  - /            → YouTube-style media grid
+ *  - /generate    → Create with AI
+ *  - /chat        → Live chat panel
+ *
+ * Decorative links (Shorts, Subscriptions, History, Playlists, a fake
+ * Subscriptions list, the Explore block, and the footer About/Press/etc
+ * links) were removed because none of them had a destination. */
+const NAV: NavItem[] = [
+  { href: "/", label: "Home", icon: HOME_ICON },
+  { href: "/generate", label: "Generate", icon: GENERATE_ICON },
+  { href: "/chat", label: "Chat", icon: CHAT_ICON },
+];
+
+export default function Sidebar() {
   const pathname = usePathname();
+  const { collapsed } = useSidebar();
 
-  const navItems = [
-    {
-      href: "/",
-      label: "Photos",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      ),
-    },
-    {
-      href: "/generate",
-      label: "Generate",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-        </svg>
-      ),
-    },
-    {
-      href: "/chat",
-      label: "Chat to Voyle",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      ),
-    },
-    {
-      href: "/make-your-own",
-      label: "Make Your Own",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-        </svg>
-      ),
-    },
-    {
-      href: "/spencer",
-      label: "Chat to Spencer",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-        </svg>
-      ),
-    },
-  ];
+  // ----- Mini rail (collapsed) ------------------------------------------
+  if (collapsed) {
+    return (
+      <aside className="fixed top-14 left-0 bottom-0 w-[72px] bg-[color:var(--yt-surface)] overflow-y-auto pt-2 px-1 z-20 scrollbar-thin">
+        <ul className="space-y-1">
+          {NAV.map((item) => (
+            <SidebarLink key={item.label} item={item} pathname={pathname} mini />
+          ))}
+        </ul>
+      </aside>
+    );
+  }
 
+  // ----- Full sidebar ---------------------------------------------------
   return (
-    <aside className="w-56 bg-[#f8f9fa] border-r border-[#e0e0e0] flex flex-col h-screen sticky top-0">
-      {/* Logo */}
-      <div className="px-5 py-5">
-        <Link href="/" className="flex items-center gap-2">
-          <svg className="w-7 h-7" viewBox="0 0 24 24">
-            <path d="M12 3.5l2.5 4.5L12 12 9.5 8z" fill="#4285F4" />
-            <path d="M12 3.5l4.5 2.5L12 12z" fill="#34A853" />
-            <path d="M16.5 6L21 8.5 12 12z" fill="#FBBC04" />
-            <path d="M21 8.5v5L12 12z" fill="#EA4335" />
-            <path d="M21 13.5L16.5 18 12 12z" fill="#4285F4" />
-            <path d="M16.5 18L12 20.5 12 12z" fill="#34A853" />
-            <path d="M12 20.5L7.5 18 12 12z" fill="#FBBC04" />
-            <path d="M7.5 18L3 13.5 12 12z" fill="#EA4335" />
-            <path d="M3 13.5v-5L12 12z" fill="#4285F4" />
-            <path d="M3 8.5L7.5 6 12 12z" fill="#34A853" />
-            <path d="M7.5 6L12 3.5 12 12z" fill="#FBBC04" />
-          </svg>
-          <span className="text-[#5f6368] text-lg font-medium tracking-tight">Photos</span>
-        </Link>
-      </div>
-
-      {/* Nav items */}
-      <nav className="flex-1 px-2 space-y-0.5">
-        {navItems.map((item) => {
-          const isActive =
-            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-full text-sm transition-colors ${
-                isActive
-                  ? "bg-[#d2e3fc] text-[#001d35] font-medium"
-                  : "text-[#5f6368] hover:bg-[#e8eaed]"
-              }`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Bottom: user + sign out */}
-      <div className="p-3 border-t border-[#e0e0e0] flex items-center justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          {user && (
-            <>
-              <div className="w-8 h-8 rounded-full bg-[#1a73e8] text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-[#5f6368] text-sm truncate">{user.name}</span>
-            </>
-          )}
-        </div>
-        <LogoutButton />
-      </div>
+    <aside className="fixed top-14 left-0 bottom-0 w-60 bg-[color:var(--yt-surface)] overflow-y-auto pt-2 px-3 z-20 scrollbar-thin">
+      <ul className="space-y-1">
+        {NAV.map((item) => (
+          <SidebarLink key={item.label} item={item} pathname={pathname} />
+        ))}
+      </ul>
     </aside>
+  );
+}
+
+function SidebarLink({
+  item,
+  pathname,
+  mini = false,
+}: {
+  item: NavItem;
+  pathname: string;
+  mini?: boolean;
+}) {
+  const isActive =
+    item.href === "/"
+      ? pathname === "/"
+      : pathname === item.href || pathname.startsWith(item.href + "/");
+  const base = mini
+    ? "flex flex-col items-center gap-1 py-3 px-1 rounded-lg hover:bg-[color:var(--yt-hover)]"
+    : "yt-sidebar-link";
+  const active = isActive ? "bg-[color:var(--yt-hover)] font-medium" : "";
+  return (
+    <li>
+      <Link href={item.href} className={`${base} ${active}`}>
+        {item.icon}
+        {mini ? (
+          <span className="text-[10px] leading-tight">{item.label}</span>
+        ) : (
+          <span className="truncate">{item.label}</span>
+        )}
+      </Link>
+    </li>
   );
 }

@@ -10,6 +10,11 @@ interface GeneratedImage {
   mode: string;
 }
 
+/* /generate — YouTube-style "Create with AI" page.
+ *
+ * Header is a YouTube chip row instead of a hero panel. The prompt bar
+ * matches the topbar search input but is wider. The gallery renders
+ * 16:9 thumbnails identical to the home grid. */
 export default function GenerateContent() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,11 +58,9 @@ export default function GenerateContent() {
     setLoading(true);
 
     try {
-      // Use multipart form data if an image was uploaded, otherwise JSON
       let res: Response;
 
       if (uploadedImage) {
-        // Convert base64 data URL back to a File
         const response = await fetch(uploadedImage);
         const blob = await response.blob();
         const file = new File([blob], uploadedFileName || "upload.jpg", {
@@ -104,169 +107,171 @@ export default function GenerateContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Hero section */}
-      <section className="border-b border-[#e0e0e0] bg-[#f8f9fa]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 text-center">
-          <h1 className="text-4xl sm:text-5xl font-normal text-[#202124] tracking-tight mb-3">
-            Create with AI
-          </h1>
-          <p className="text-[#5f6368] text-base mb-1">
+    <div className="px-4 sm:px-6 py-4 max-w-[1600px] mx-auto">
+      {/* Compact title row */}
+      <div className="flex items-end justify-between mb-4 flex-wrap gap-2">
+        <div>
+          <h1 className="text-2xl font-semibold">Create with AI</h1>
+          <p className="text-sm text-[color:var(--yt-text-secondary)]">
             Type anything. Get a picture. No limits.
           </p>
-          <p className="text-[#80868b] text-sm">
-            powered by Stable Diffusion XL
-          </p>
         </div>
-      </section>
+        <Link
+          href="/"
+          className="text-sm text-[color:var(--yt-blue)] hover:underline"
+        >
+          ← Back to home
+        </Link>
+      </div>
 
-      {/* Generator */}
-      <section className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-8">
-        <form onSubmit={handleGenerate} className="space-y-4">
-          {/* Image upload area */}
-          <div>
-            <label className="text-[#5f6368] text-xs mb-2 block">
-              reference image (optional — AI will use it as context)
-            </label>
-            {uploadedImage ? (
-              <div className="relative inline-block">
-                <img
-                  src={uploadedImage}
-                  alt="Upload preview"
-                  className="max-h-32 rounded-lg border border-[#dadce0]"
-                />
-                <button
-                  type="button"
-                  onClick={clearUploadedImage}
-                  className="absolute -top-2 -right-2 bg-white border border-[#dadce0] rounded-full w-6 h-6 flex items-center justify-center text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors shadow-sm"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ) : (
+      {/* Composer */}
+      <div className="space-y-3">
+        <div>
+          {uploadedImage ? (
+            <div className="relative inline-block">
+              <img
+                src={uploadedImage}
+                alt="Upload preview"
+                className="max-h-28 rounded-lg border border-[color:var(--yt-border)]"
+              />
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={loading}
-                className="w-full border-2 border-dashed border-[#dadce0] rounded-lg py-6 px-4 text-[#5f6368] text-sm hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors flex flex-col items-center gap-2 disabled:opacity-40"
+                onClick={clearUploadedImage}
+                className="absolute -top-2 -right-2 bg-white border border-[color:var(--yt-border)] rounded-full w-6 h-6 flex items-center justify-center text-[color:var(--yt-text-secondary)] hover:text-[color:var(--yt-text)] transition-colors shadow-sm"
+                aria-label="Remove uploaded image"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
-                <span>click to upload an image</span>
-                <span className="text-xs text-[#80868b]">jpg, png, gif · max 4MB</span>
               </button>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
-
-          {/* Prompt input */}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder={uploadedImage ? "describe how to transform the image..." : "describe anything..."}
-              autoFocus
-              disabled={loading}
-              className="flex-1 px-4 py-3 bg-white border border-[#dadce0] rounded-lg text-[#202124] text-sm focus:outline-none focus:border-[#1a73e8] focus:border-2 transition-colors placeholder:text-[#80868b]"
-            />
+            </div>
+          ) : (
             <button
-              type="submit"
-              disabled={loading || !prompt.trim()}
-              className="px-6 py-3 bg-[#1a73e8] text-white rounded-lg font-medium hover:bg-[#1765cc] hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm whitespace-nowrap"
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              className="text-sm text-[color:var(--yt-blue)] hover:underline disabled:opacity-50"
             >
-              {loading ? "generating..." : "generate"}
+              + add a reference image
             </button>
-          </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+        </div>
 
-          {error && <p className="text-[#d93025] text-sm">{error}</p>}
+        <form onSubmit={handleGenerate} className="flex gap-2">
+          <input
+            type="text"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder={
+              uploadedImage
+                ? "Describe how to transform the image…"
+                : "Describe anything…"
+            }
+            autoFocus
+            disabled={loading}
+            className="flex-1 h-10 px-4 border border-[color:var(--yt-border)] rounded-full bg-[color:var(--yt-surface)] text-sm focus:outline-none focus:border-[color:var(--yt-blue)] placeholder:text-[color:var(--yt-text-secondary)]"
+          />
+          <button
+            type="submit"
+            disabled={loading || !prompt.trim()}
+            className="h-10 px-5 bg-[color:var(--yt-blue)] text-white rounded-full text-sm font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            {loading ? "Generating…" : "Generate"}
+          </button>
         </form>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
         {/* Suggestion chips */}
         {!loading && gallery.length === 0 && (
-          <div className="mt-6">
-            <p className="text-[#5f6368] text-xs mb-3">try one of these:</p>
-            <div className="flex flex-wrap gap-2">
-              {[
-                "a neon city at night in the rain",
-                "a cozy cabin in a snowy forest",
-                "an astronaut riding a whale through space",
-                "a vintage film photo of a parisian café",
-                "a dragon made of flowers",
-              ].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setPrompt(s)}
-                  className="px-3 py-1.5 bg-white border border-[#dadce0] rounded-full text-[#5f6368] text-xs hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              "a neon city at night in the rain",
+              "a cozy cabin in a snowy forest",
+              "an astronaut riding a whale through space",
+              "a vintage film photo of a parisian café",
+              "a dragon made of flowers",
+            ].map((s) => (
+              <button
+                key={s}
+                onClick={() => setPrompt(s)}
+                className="yt-chip"
+              >
+                {s}
+              </button>
+            ))}
           </div>
         )}
-      </section>
+      </div>
 
       {/* Loading state */}
       {loading && (
-        <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 pb-8">
-          <div className="bg-[#f8f9fa] border border-[#e0e0e0] rounded-2xl p-12 flex flex-col items-center gap-4">
-            <div className="flex gap-1.5">
-              <span className="w-2.5 h-2.5 bg-[#1a73e8] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-2.5 h-2.5 bg-[#1a73e8] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="w-2.5 h-2.5 bg-[#1a73e8] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-            <p className="text-[#5f6368] text-sm">
-              {uploadedImage ? "transforming your image..." : "painting your image..."}
-            </p>
+        <div className="mt-8 bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)] rounded-2xl p-12 flex flex-col items-center gap-4">
+          <div className="flex gap-1.5">
+            <span
+              className="w-2.5 h-2.5 bg-[color:var(--yt-blue)] rounded-full animate-bounce"
+              style={{ animationDelay: "0ms" }}
+            />
+            <span
+              className="w-2.5 h-2.5 bg-[color:var(--yt-blue)] rounded-full animate-bounce"
+              style={{ animationDelay: "150ms" }}
+            />
+            <span
+              className="w-2.5 h-2.5 bg-[color:var(--yt-blue)] rounded-full animate-bounce"
+              style={{ animationDelay: "300ms" }}
+            />
           </div>
+          <p className="text-sm text-[color:var(--yt-text-secondary)]">
+            {uploadedImage ? "Transforming your image…" : "Painting your image…"}
+          </p>
         </div>
       )}
 
-      {/* Gallery of generated images */}
+      {/* Gallery of generated images (YouTube card grid) */}
       {gallery.length > 0 && (
-        <section className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 pb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[#5f6368] text-sm">
-              {gallery.length} {gallery.length === 1 ? "image" : "images"} generated this session
-            </h2>
-            <Link
-              href="/"
-              className="text-[#1a73e8] hover:text-[#1765cc] text-sm font-medium transition-colors"
-            >
-              view full catalog →
-            </Link>
-          </div>
+        <section className="mt-8">
+          <h2 className="text-sm text-[color:var(--yt-text-secondary)] mb-4">
+            {gallery.length}{" "}
+            {gallery.length === 1 ? "image" : "images"} generated this session
+          </h2>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
             {gallery.map((img) => (
-              <div
-                key={img.filename}
-                className="rounded-lg overflow-hidden bg-white border border-[#e0e0e0] group relative shadow-sm hover:shadow-md transition-shadow"
-              >
-                <img
-                  src={img.path}
-                  alt={img.prompt}
-                  className="w-full h-auto"
-                />
-                <div className="p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[#80868b] text-[10px] uppercase tracking-wide">
-                      {img.mode === "img2img" ? "img → img" : "text → img"}
-                    </span>
-                  </div>
-                  <p className="text-[#5f6368] text-xs line-clamp-2">{img.prompt}</p>
-                </div>
-              </div>
+              <article key={img.filename} className="group">
+                <Link
+                  href={`/p/${encodeURIComponent(img.filename)}`}
+                  className="block aspect-video rounded-xl overflow-hidden bg-[color:var(--yt-chip)]"
+                >
+                  <img
+                    src={img.path}
+                    alt={img.prompt}
+                    className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                  />
+                </Link>
+                <h3 className="text-sm font-medium mt-3 line-clamp-2">
+                  {img.prompt}
+                </h3>
+                <p className="text-xs text-[color:var(--yt-text-secondary)] mt-1">
+                  {img.mode === "img2img" ? "img → img" : "text → img"}
+                </p>
+              </article>
             ))}
           </div>
         </section>

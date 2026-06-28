@@ -2,24 +2,43 @@
 
 import { useRouter } from "next/navigation";
 
+/** YouTube-style icon-only logout button. Used in the topbar avatar
+ *  menu. Posts to /api/auth/logout then redirects to /login. */
 export default function LogoutButton() {
   const router = useRouter();
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore — refresh will still redirect to /login
+    }
     router.refresh();
+    router.push("/login");
   }
 
   return (
     <button
+      type="button"
       onClick={handleLogout}
-      className="text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] rounded-full p-2 transition-colors"
+      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[color:var(--yt-hover)] text-left"
       aria-label="Sign out"
+      title="Sign out"
     >
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+      <svg
+        viewBox="0 0 24 24"
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M16 17l5-5-5-5" />
+        <path d="M21 12H9" />
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       </svg>
+      <span>Sign out</span>
     </button>
   );
 }

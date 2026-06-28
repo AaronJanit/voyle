@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
-import { Roboto, Roboto_Mono } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
-import ChatWidget from "@/components/ChatWidget";
 
 const roboto = Roboto({
   variable: "--font-roboto",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-});
-
-const robotoMono = Roboto_Mono({
-  variable: "--font-roboto-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
@@ -20,30 +13,14 @@ export const metadata: Metadata = {
     default: "voyle",
     template: "%s · voyle",
   },
-  description: "a little corner of the internet for photos, gifs, and vibes",
+  description: "Your photos, your AI, your way.",
   applicationName: "voyle",
-  keywords: ["photos", "gifs", "gallery", "ai", "voyle"],
-  authors: [{ name: "voyle" }],
-  creator: "voyle",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
-  ),
-  openGraph: {
-    type: "website",
-    siteName: "voyle",
-    title: "voyle",
-    description: "a little corner of the internet for photos, gifs, and vibes",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "voyle",
-    description: "a little corner of the internet for photos, gifs, and vibes",
-  },
   icons: {
     icon: [
       {
+        // Red play-button favicon to match the YouTube-style logo.
         url:
-          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3.5l2.5 4.5L12 12 9.5 8z' fill='%234285F4'/%3E%3Cpath d='M12 3.5l4.5 2.5L12 12z' fill='%2334A853'/%3E%3Cpath d='M16.5 6L21 8.5 12 12z' fill='%23FBBC04'/%3E%3Cpath d='M21 8.5v5L12 12z' fill='%23EA4335'/%3E%3C/svg%3E",
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21.6 7.2a2.5 2.5 0 0 0-1.76-1.77C18.25 5 12 5 12 5s-6.25 0-7.84.43A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.76 1.77C5.75 19 12 19 12 19s6.25 0 7.84-.43a2.5 2.5 0 0 0 1.76-1.77A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8Z' fill='%23ff0000'/%3E%3Cpath d='M10 15l5-3-5-3z' fill='%23fff'/%3E%3C/svg%3E",
       },
     ],
   },
@@ -55,13 +32,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${roboto.variable} ${robotoMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-white text-[#202124] font-roboto">
+    <html lang="en" className={`${roboto.variable} h-full`}>
+      <body className="min-h-full bg-[color:var(--yt-bg)] text-[color:var(--yt-text)]">
         {children}
-        <ChatWidget />
       </body>
     </html>
   );

@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 
 type ViewState = "form" | "loading" | "unplugged";
 
+/* Login page — YouTube-style.
+ *
+ * A red play-button logo sits above a centered form with two floating-label
+ * inputs. The Sign-in button matches YouTube's flat, blue (we keep the
+ * blue for "Sign in" — it's a known signal — but use the YouTube blue
+ * `#065fd4` and the YouTube red logo). On a failed login we show the
+ * "unplugged" state which the proxy has already activated behind the
+ * scenes. */
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -31,19 +39,20 @@ export default function LoginPage() {
       }
 
       // Any failed login → the site is taken down behind the scenes.
-      // Show the "Unplugged Site" screen.
       setView("unplugged");
     } catch {
       setView("unplugged");
     }
   }
 
-  // --- Full-page spinner (shown during every login attempt) --------------
+  // --- Full-page spinner (shown during every login attempt) ------------
   if (view === "loading") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
-        <div className="w-10 h-10 border-4 border-[#dadce0] border-t-[#1a73e8] rounded-full animate-spin" />
-        <p className="mt-6 text-[#5f6368] text-sm">Signing you in…</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[color:var(--yt-bg)] px-4">
+        <div className="w-10 h-10 border-4 border-[color:var(--yt-border)] border-t-[color:var(--yt-blue)] rounded-full animate-spin" />
+        <p className="mt-6 text-sm text-[color:var(--yt-text-secondary)]">
+          Signing you in…
+        </p>
       </div>
     );
   }
@@ -65,28 +74,22 @@ export default function LoginPage() {
 
   // --- Login form -------------------------------------------------------
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[color:var(--yt-bg)] px-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <svg className="w-12 h-12 mb-4" viewBox="0 0 24 24" fill="none">
-            <path d="M12 3.5l2.5 4.5L12 12 9.5 8z" fill="#4285F4" />
-            <path d="M12 3.5l4.5 2.5L12 12z" fill="#34A853" />
-            <path d="M16.5 6L21 8.5 12 12z" fill="#FBBC04" />
-            <path d="M21 8.5v5L12 12z" fill="#EA4335" />
-            <path d="M21 13.5L16.5 18 12 12z" fill="#4285F4" />
-            <path d="M16.5 18L12 20.5 12 12z" fill="#34A853" />
-            <path d="M12 20.5L7.5 18 12 12z" fill="#FBBC04" />
-            <path d="M7.5 18L3 13.5 12 12z" fill="#EA4335" />
-            <path d="M3 13.5v-5L12 12z" fill="#4285F4" />
-            <path d="M3 8.5L7.5 6 12 12z" fill="#34A853" />
-            <path d="M7.5 6L12 3.5 12 12z" fill="#FBBC04" />
+          {/* Red play-button logo — same glyph as the NavBar / favicon */}
+          <svg viewBox="0 0 24 24" className="w-14 h-14 mb-4" aria-hidden>
+            <path
+              d="M21.6 7.2a2.5 2.5 0 0 0-1.76-1.77C18.25 5 12 5 12 5s-6.25 0-7.84.43A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.76 1.77C5.75 19 12 19 12 19s6.25 0 7.84-.43a2.5 2.5 0 0 0 1.76-1.77A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8Z"
+              fill="var(--yt-brand)"
+            />
+            <path d="M10 15l5-3-5-3z" fill="#fff" />
           </svg>
-          <h1 className="text-2xl font-normal text-[#202124] mb-1">
+          <h1 className="text-2xl font-normal text-[color:var(--yt-text)] mb-1">
             Sign in
           </h1>
-          <p className="text-[#5f6368] text-sm text-center">
-            to continue to Photos
+          <p className="text-sm text-[color:var(--yt-text-secondary)] text-center">
+            to continue to voyle
           </p>
         </div>
 
@@ -99,10 +102,10 @@ export default function LoginPage() {
               placeholder=" "
               autoComplete="email"
               autoFocus
-              className="peer w-full px-3.5 pt-4 pb-2 bg-transparent border border-[#dadce0] rounded text-[#202124] text-sm focus:outline-none focus:border-[#1a73e8] focus:border-2 transition-colors placeholder:text-transparent"
+              className="peer w-full px-3.5 pt-4 pb-2 bg-transparent border border-[color:var(--yt-border)] rounded text-[color:var(--yt-text)] text-sm focus:outline-none focus:border-[color:var(--yt-blue)] focus:border-2 transition-colors placeholder:text-transparent"
               required
             />
-            <label className="absolute left-3 top-3.5 text-[#5f6368] text-sm transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[#1a73e8] peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs">
+            <label className="absolute left-3 top-3.5 text-[color:var(--yt-text-secondary)] text-sm transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[color:var(--yt-blue)] peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs">
               Email
             </label>
           </div>
@@ -114,23 +117,23 @@ export default function LoginPage() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder=" "
-              className="peer w-full px-3.5 pt-4 pb-2 bg-transparent border border-[#dadce0] rounded text-[#202124] text-sm focus:outline-none focus:border-[#1a73e8] focus:border-2 transition-colors placeholder:text-transparent"
+              className="peer w-full px-3.5 pt-4 pb-2 bg-transparent border border-[color:var(--yt-border)] rounded text-[color:var(--yt-text)] text-sm focus:outline-none focus:border-[color:var(--yt-blue)] focus:border-2 transition-colors placeholder:text-transparent"
               required
             />
-            <label className="absolute left-3 top-3.5 text-[#5f6368] text-sm transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[#1a73e8] peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs">
+            <label className="absolute left-3 top-3.5 text-[color:var(--yt-text-secondary)] text-sm transition-all peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[color:var(--yt-blue)] peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs">
               Passcode
             </label>
           </div>
 
           {error && (
-            <p className="text-[#d93025] text-sm text-center">{error}</p>
+            <p className="text-red-600 text-sm text-center">{error}</p>
           )}
 
           <div className="flex justify-end pt-2">
             <button
               type="submit"
               disabled={!code || !email}
-              className="px-6 py-2.5 bg-[#1a73e8] text-white rounded text-sm font-medium hover:bg-[#1765cc] hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2 bg-[color:var(--yt-blue)] text-white rounded-full text-sm font-medium hover:opacity-90 hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               Sign in
             </button>

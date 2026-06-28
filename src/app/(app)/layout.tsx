@@ -1,22 +1,28 @@
-// Voyle — authenticated layout with Google Photos-style sidebar
-// Used for /, /generate, and /chat routes.
-
+import { SidebarProvider } from "@/components/SidebarContext";
+import NavBar from "@/components/NavBar";
 import Sidebar from "@/components/Sidebar";
-import { getCurrentUser } from "@/lib/user";
+import ChatWidget from "@/components/ChatWidget";
+import ShellOffset from "@/components/ShellOffset";
 
-export const dynamic = "force-dynamic";
-
-export default async function AppLayout({
+/* YouTube-style shell: a fixed top bar plus a fixed sidebar that can be
+ * collapsed to a 72px icon rail. Pages inside the (app) route group are
+ * rendered inside the main content area, with a left margin that adapts
+ * to the sidebar's collapsed state via the ShellOffset client component. */
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
-
   return (
-    <div className="min-h-screen flex bg-white">
-      <Sidebar user={user ? { name: user.name } : undefined} />
-      <div className="flex-1 flex flex-col min-w-0">{children}</div>
-    </div>
+    <SidebarProvider>
+      <NavBar />
+      <Sidebar />
+      <ShellOffset>
+        <main className="min-h-screen pt-14 bg-[color:var(--yt-bg)]">
+          {children}
+        </main>
+      </ShellOffset>
+      <ChatWidget />
+    </SidebarProvider>
   );
 }

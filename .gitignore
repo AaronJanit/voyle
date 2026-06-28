@@ -46,3 +46,5 @@ next-env.d.ts
 # Voyle — SQLite database
 /prisma/dev.db
 /prisma/dev.db-journal
+# dev log
+dev.log

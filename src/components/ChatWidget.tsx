@@ -101,11 +101,11 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button — YouTube red, matches the rest of the brand */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-40 bg-[#1a73e8] text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-[#1765cc] hover:shadow-xl transition-all"
+          className="fixed bottom-6 right-6 z-40 bg-[color:var(--yt-brand)] text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-[color:var(--yt-brand-hover)] hover:shadow-xl transition-all"
           aria-label="Open chat"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,9 +121,9 @@ export default function ChatWidget() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 z-40 w-full sm:w-96 h-full sm:h-[32rem] sm:max-h-[80vh] bg-neutral-900 border border-neutral-800 sm:rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+        <div className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 z-40 w-full sm:w-96 h-full sm:h-[32rem] sm:max-h-[80vh] bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)] sm:rounded-2xl flex flex-col shadow-2xl overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-neutral-900">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[color:var(--yt-border)] bg-[color:var(--yt-surface)]">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-400 rounded-full" />
               <span className="text-white font-medium text-sm">voyle</span>
@@ -161,8 +161,8 @@ export default function ChatWidget() {
                 <div
                   className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
                     msg.role === "user"
-                      ? "bg-white text-black rounded-br-sm"
-                      : "bg-neutral-800 text-neutral-100 rounded-bl-sm"
+                      ? "bg-[color:var(--yt-blue)] text-white rounded-br-sm"
+                      : "bg-[color:var(--yt-chip)] text-[color:var(--yt-text)] rounded-bl-sm"
                   }`}
                 >
                   {msg.content || (
@@ -181,15 +181,15 @@ export default function ChatWidget() {
           {/* Input */}
           <form
             onSubmit={sendMessage}
-            className="flex items-center gap-2 px-4 py-3 border-t border-neutral-800 bg-neutral-900"
+            className="flex items-center gap-2 px-4 py-3 border-t border-[color:var(--yt-border)] bg-[color:var(--yt-surface)]"
           >
             <input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="type something..."
+              placeholder="Type something…"
               disabled={streaming}
-              className="flex-1 bg-neutral-800 text-white text-sm px-3 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:border-neutral-500 transition-colors placeholder:text-neutral-500"
+              className="flex-1 bg-[color:var(--yt-bg)] text-[color:var(--yt-text)] text-sm px-3 py-2 rounded-full border border-[color:var(--yt-border)] focus:outline-none focus:border-[color:var(--yt-blue)] transition-colors placeholder:text-[color:var(--yt-text-secondary)]"
             />
             <button
               type="submit"

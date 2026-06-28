@@ -1,60 +1,44 @@
-import { scanMediaDir, MediaItem } from "@/lib/media";
+// Voyle — home page (YouTube-style video grid)
+// Server Component that scans the /media directory and renders a grid of
+// YouTube-style video cards. Filter chips at the top let the user narrow
+// by category — purely client-side, computed from the search param.
+
 import MediaView from "@/components/MediaView";
-import Link from "next/link";
+import { scanMediaDir } from "@/lib/media";
+import { getCurrentUser } from "@/lib/user";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
   const items = scanMediaDir();
-  const regularItems = items.filter((i) => !i.isGenerated);
-  const generatedItems = items.filter((i) => i.isGenerated);
+  const user = await getCurrentUser();
+  const sp = await searchParams;
+  const search = typeof sp.search === "string" ? sp.search : "";
+
+  // Simple search-by-filename. Real search would index metadata.
+  const filtered = search
+    ? items.filter((i) =>
+        i.name.toLowerCase().includes(search.toLowerCase())
+      )
+    : items;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Top action bar */}
-      <div className="px-4 sm:px-8 py-4 flex items-center justify-between border-b border-[#e0e0e0]">
-        <h1 className="text-2xl font-normal text-[#202124]">
-          {regularItems.length > 0 ? "Photos" : ""}
-        </h1>
-        <Link
-          href="/generate"
-          className="flex items-center gap-2 px-4 py-2 bg-[#1a73e8] hover:bg-[#1765cc] text-white text-sm font-medium rounded transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-          </svg>
-          Create with AI
-        </Link>
-      </div>
-
-      {/* Catalog */}
-      <main className="flex-1 max-w-[1600px] w-full px-4 sm:px-8 py-6 space-y-10">
-        {/* Regular media */}
-        <section>
-          <MediaView items={regularItems as MediaItem[]} />
-        </section>
-
-        {/* AI-generated media */}
-        {generatedItems.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[#202124] text-base font-medium">
-                AI generated
-                <span className="ml-2 text-[#80868b] font-normal text-sm">
-                  {generatedItems.length} {generatedItems.length === 1 ? "image" : "images"}
-                </span>
-              </h2>
-              <Link
-                href="/generate"
-                className="text-[#1a73e8] hover:text-[#1765cc] text-sm transition-colors"
-              >
-                Generate more
-              </Link>
-            </div>
-            <MediaView items={generatedItems as MediaItem[]} />
-          </section>
-        )}
-      </main>
+    <div className="px-4 sm:px-6 py-4">
+      {search && (
+        <p className="text-sm text-[color:var(--yt-text-secondary)] mb-3">
+          Results for <span className="text-[color:var(--yt-text)]">&ldquo;{search}&rdquo;</span>
+          {filtered.length > 0 && (
+            <>
+              {" "}— {filtered.length} {filtered.length === 1 ? "item" : "items"}
+            </>
+          )}
+        </p>
+      )}
+      <MediaView items={filtered} user={user} />
     </div>
   );
 }

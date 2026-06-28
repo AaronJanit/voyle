@@ -2,108 +2,127 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Home, Sparkles, MessageSquare, Clapperboard, MessageCircle } from "lucide-react";
 import { useSidebar } from "./SidebarContext";
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ReactNode;
+  tag?: string;
 }
 
-const HOME_ICON = (
-  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
-    <path d="M12 4.33l7 6.12V20h-4v-6H9v6H5v-9.55l7-6.12M12 3 4 10v10a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h4v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V10l-8-7z" />
-  </svg>
-);
-const GENERATE_ICON = (
-  <svg
-    viewBox="0 0 24 24"
-    className="w-6 h-6"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.08A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.08A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.08A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.08A1.7 1.7 0 0 0 19.4 15z" />
-  </svg>
-);
-const CHAT_ICON = (
-  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
-    <path d="M11 7l6 3.5-6 3.5V7zm7 13H4V6H3v15h15v-1zm3-2H6V3h15v15zM7 4v13h13V4H7z" />
-  </svg>
-);
-
-/* Only routes that actually exist are listed. Each one has a working
- * page behind it:
- *  - /            → YouTube-style media grid
- *  - /generate    → Create with AI
- *  - /chat        → Live chat panel
- *
- * Decorative links (Shorts, Subscriptions, History, Playlists, a fake
- * Subscriptions list, the Explore block, and the footer About/Press/etc
- * links) were removed because none of them had a destination. */
 const NAV: NavItem[] = [
-  { href: "/", label: "Home", icon: HOME_ICON },
-  { href: "/generate", label: "Generate", icon: GENERATE_ICON },
-  { href: "/chat", label: "Chat", icon: CHAT_ICON },
+  { href: "/", label: "Home", icon: <Home className="w-6 h-6 shrink-0" /> },
+];
+
+const CHAT_NAV: NavItem[] = [
+  { href: "/chat", label: "Chat to Voyle", icon: <MessageSquare className="w-6 h-6 shrink-0" /> },
+  { href: "/spencer", label: "Chat to Spencer", icon: <MessageCircle className="w-6 h-6 shrink-0" /> },
+];
+
+const CREATE_NAV: NavItem[] = [
+  { href: "/generate", label: "Unlimited AI Image", icon: <Sparkles className="w-6 h-6 shrink-0" /> },
+  { href: "/channel", label: "My Channel", icon: <Clapperboard className="w-6 h-6 shrink-0" />, tag: "Active" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { collapsed } = useSidebar();
 
-  // ----- Mini rail (collapsed) ------------------------------------------
-  if (collapsed) {
-    return (
-      <aside className="fixed top-14 left-0 bottom-0 w-[72px] bg-[color:var(--yt-surface)] overflow-y-auto pt-2 px-1 z-20 scrollbar-thin">
-        <ul className="space-y-1">
-          {NAV.map((item) => (
-            <SidebarLink key={item.label} item={item} pathname={pathname} mini />
-          ))}
-        </ul>
-      </aside>
-    );
-  }
-
-  // ----- Full sidebar ---------------------------------------------------
   return (
-    <aside className="fixed top-14 left-0 bottom-0 w-60 bg-[color:var(--yt-surface)] overflow-y-auto pt-2 px-3 z-20 scrollbar-thin">
+    <aside
+      className={`fixed top-14 left-0 bottom-0 bg-[color:var(--yt-surface)] overflow-y-auto overflow-x-hidden pt-2 z-20 scrollbar-thin transition-[width] duration-200 ease-in-out ${
+        collapsed ? "w-[72px] px-1" : "w-60 px-3"
+      }`}
+    >
       <ul className="space-y-1">
         {NAV.map((item) => (
-          <SidebarLink key={item.label} item={item} pathname={pathname} />
+          <SidebarLink key={item.label} item={item} pathname={pathname} collapsed={collapsed} />
+        ))}
+      </ul>
+      <div className="my-2 border-t border-[color:var(--yt-border)]" />
+      <SectionLabel label="Chats" collapsed={collapsed} />
+      <ul className="space-y-1">
+        {CHAT_NAV.map((item) => (
+          <SidebarLink key={item.label} item={item} pathname={pathname} collapsed={collapsed} />
+        ))}
+      </ul>
+      <div className="my-2 border-t border-[color:var(--yt-border)]" />
+      <SectionLabel label="Create" collapsed={collapsed} />
+      <ul className="space-y-1">
+        {CREATE_NAV.map((item) => (
+          <SidebarLink key={item.label} item={item} pathname={pathname} collapsed={collapsed} />
         ))}
       </ul>
     </aside>
   );
 }
 
+function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean }) {
+  return (
+    <p
+      className={`px-3 py-1 text-xs font-medium uppercase tracking-wider text-[color:var(--yt-text-secondary)] transition-opacity duration-200 ${
+        collapsed ? "opacity-0 h-0 overflow-hidden" : "opacity-100"
+      }`}
+    >
+      {label}
+    </p>
+  );
+}
+
 function SidebarLink({
   item,
   pathname,
-  mini = false,
+  collapsed,
 }: {
   item: NavItem;
   pathname: string;
-  mini?: boolean;
+  collapsed: boolean;
 }) {
   const isActive =
     item.href === "/"
       ? pathname === "/"
       : pathname === item.href || pathname.startsWith(item.href + "/");
-  const base = mini
-    ? "flex flex-col items-center gap-1 py-3 px-1 rounded-lg hover:bg-[color:var(--yt-hover)]"
-    : "yt-sidebar-link";
-  const active = isActive ? "bg-[color:var(--yt-hover)] font-medium" : "";
+
+  if (collapsed) {
+    return (
+      <li>
+        <Link
+          href={item.href}
+          className={`flex flex-col items-center gap-1 py-3 px-1 rounded-lg hover:bg-[color:var(--yt-hover)] transition-colors ${
+            isActive ? "bg-[color:var(--yt-hover)] font-medium" : ""
+          }`}
+          title={item.label}
+        >
+          {item.icon}
+          <span className="text-[10px] leading-tight truncate w-full text-center">
+            {item.label}
+          </span>
+          {item.tag && (
+            <span className="text-[8px] leading-none font-semibold text-[color:var(--yt-brand)]">
+              {item.tag}
+            </span>
+          )}
+        </Link>
+      </li>
+    );
+  }
+
   return (
     <li>
-      <Link href={item.href} className={`${base} ${active}`}>
+      <Link
+        href={item.href}
+        className={`yt-sidebar-link transition-colors ${
+          isActive ? "bg-[color:var(--yt-hover)] font-medium" : ""
+        }`}
+      >
         {item.icon}
-        {mini ? (
-          <span className="text-[10px] leading-tight">{item.label}</span>
-        ) : (
-          <span className="truncate">{item.label}</span>
+        <span className="truncate">{item.label}</span>
+        {item.tag && (
+          <span className="ml-auto text-[10px] leading-none font-semibold px-1.5 py-0.5 rounded bg-[color:var(--yt-brand)]/10 text-[color:var(--yt-brand)]">
+            {item.tag}
+          </span>
         )}
       </Link>
     </li>

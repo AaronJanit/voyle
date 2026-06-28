@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { getCurrentUser } from "@/lib/user";
+import { recordUpload } from "@/lib/channel";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,6 +115,12 @@ export async function POST(request: NextRequest) {
 
   // Save the image to /media so it appears in the catalog
   writeFileSync(filepath, imageBuffer);
+
+  // Record attribution (best-effort — don't fail the upload if this breaks)
+  const user = await getCurrentUser();
+  if (user) {
+    await recordUpload(filename, user.email, user.name);
+  }
 
   return NextResponse.json({
     success: true,

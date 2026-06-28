@@ -2,16 +2,19 @@
 
 import { MediaItem } from "@/lib/media";
 import { useState } from "react";
+import { LayoutGrid, Clapperboard } from "lucide-react";
 import MediaGrid from "./MediaGrid";
 import ShortsViewer from "./ShortsViewer";
 import YouTubeGrid from "./YouTubeGrid";
 import { CurrentUser } from "@/lib/user";
+import { ChannelInfo } from "@/lib/channel";
 
 export type ViewMode = "grid" | "shorts";
 
 interface MediaViewProps {
   items: MediaItem[];
   user: CurrentUser | null;
+  attribution?: Map<string, ChannelInfo>;
 }
 
 /* The MediaView owns three display modes:
@@ -24,6 +27,7 @@ interface MediaViewProps {
 export default function MediaView({
   items,
   user,
+  attribution,
 }: MediaViewProps) {
   const [mode, setMode] = useState<ViewMode>("grid");
 
@@ -51,7 +55,7 @@ export default function MediaView({
   return (
     <>
       <ViewToggle mode={mode} setMode={setMode} />
-      <YouTubeGrid items={items} user={user} />
+      <YouTubeGrid items={items} user={user} attribution={attribution} />
     </>
   );
 }
@@ -70,28 +74,14 @@ function ViewToggle({
         onClick={() => setMode("grid")}
         label="Grid"
       >
-        <svg
-          viewBox="0 0 24 24"
-          className="w-4 h-4"
-          fill="currentColor"
-          aria-hidden
-        >
-          <path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z" />
-        </svg>
+        <LayoutGrid className="w-4 h-4" aria-hidden />
       </ToggleButton>
       <ToggleButton
         active={mode === "shorts"}
         onClick={() => setMode("shorts")}
         label="Shorts"
       >
-        <svg
-          viewBox="0 0 24 24"
-          className="w-4 h-4"
-          fill="currentColor"
-          aria-hidden
-        >
-          <path d="M17.77 10.32l-1.2-.5.6-1.43-1.43.6-.5-1.2L13.6 9.1l-2.84-.7L13.6 7.7l-1.66-1.3-1.43.6.6-1.43-1.2-.5-.5 1.2L7.7 5.6 7.4 7.04 5.96 7.4l.36 1.43 1.43-.6 1.43 1.93-1.2.5 1.2.5-.6 1.43 1.43-.6.5 1.2 1.62-1.3 2.84.7-2.84 1.4 1.66 1.3 1.43-.6-.6 1.43 1.2.5.5-1.2 1.7.7.3-1.43 1.43-.36-.36-1.43-1.43.6-1.43-1.93 1.2-.5zM10 14.65v-5.3L15 12l-5 2.65z" />
-        </svg>
+        <Clapperboard className="w-4 h-4" aria-hidden />
       </ToggleButton>
     </div>
   );

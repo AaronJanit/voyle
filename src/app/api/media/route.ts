@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scanMediaDir, classifyExtension } from "@/lib/media";
 import { COOKIE_NAME, isValidAuthToken } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/user";
+import { recordUpload } from "@/lib/channel";
 import { writeFile, mkdir, stat } from "node:fs/promises";
 import { join, extname, basename } from "node:path";
 import { randomBytes } from "node:crypto";
@@ -90,6 +92,14 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     await writeFile(join(mediaDir, filename), buffer);
     saved.push(filename);
+  }
+
+  // Record attribution for each saved file (best-effort).
+  const user = await getCurrentUser();
+  if (user) {
+    for (const filename of saved) {
+      await recordUpload(filename, user.email, user.name);
+    }
   }
 
   return NextResponse.json({ saved, errors });

@@ -3,11 +3,14 @@
 import { MediaItem } from "@/lib/media";
 import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
+import { PlusSquare } from "lucide-react";
 import { CurrentUser } from "@/lib/user";
+import { ChannelInfo } from "@/lib/channel";
 
 interface YouTubeGridProps {
   items: MediaItem[];
   user: CurrentUser | null;
+  attribution?: Map<string, ChannelInfo>;
 }
 
 interface Filter {
@@ -126,6 +129,7 @@ function timeAgo(seed: number): string {
 export default function YouTubeGrid({
   items,
   user,
+  attribution,
 }: YouTubeGridProps) {
   const [filter, setFilter] = useState<string>("all");
   const [uploading, setUploading] = useState(false);
@@ -196,9 +200,7 @@ export default function YouTubeGrid({
           aria-label="Upload"
           title="Upload"
         >
-          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
-            <path d="M14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2zm7-6H3v12h18V7zm0-2c1.1 0 2 .9 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h18z" />
-          </svg>
+          <PlusSquare className="w-5 h-5" />
         </button>
       </div>
 
@@ -216,7 +218,12 @@ export default function YouTubeGrid({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
           {visible.map((item, i) => (
-            <VideoCard key={item.id} item={item} seed={hashSeed(item.name) + i} />
+            <VideoCard
+              key={item.id}
+              item={item}
+              seed={hashSeed(item.name) + i}
+              attribution={attribution}
+            />
           ))}
         </div>
       )}
@@ -240,9 +247,21 @@ function hashSeed(name: string): number {
   return h;
 }
 
-function VideoCard({ item, seed }: { item: MediaItem; seed: number }) {
-  const channel = channelFor(item.name);
+function VideoCard({
+  item,
+  seed,
+  attribution,
+}: {
+  item: MediaItem;
+  seed: number;
+  attribution?: Map<string, ChannelInfo>;
+}) {
+  // Use real attribution if available; fall back to the fake hash for
+  // legacy/unattributed files so the grid never breaks.
+  const realChannel = attribution?.get(item.path);
+  const channel = realChannel ?? channelFor(item.name);
   const shareUrl = `/p/${encodeURIComponent(item.path)}`;
+  const channelUrl = `/channel/${encodeURIComponent(channel.name)}`;
 
   return (
     <article className="group">
@@ -302,7 +321,9 @@ function VideoCard({ item, seed }: { item: MediaItem; seed: number }) {
             </Link>
           </h3>
           <p className="mt-1 text-xs text-[color:var(--yt-text-secondary)] truncate">
-            {channel.name}
+            <Link href={channelUrl} className="hover:text-[color:var(--yt-text)]">
+              {channel.name}
+            </Link>
           </p>
           <p className="text-xs text-[color:var(--yt-text-secondary)]">
             {formatViews(seed)} · {timeAgo(seed)}

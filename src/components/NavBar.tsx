@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Menu, Search, Mic, Video, LogIn } from "lucide-react";
 import LogoutButton from "./LogoutButton";
 import { useSidebar } from "./SidebarContext";
 
@@ -68,9 +69,7 @@ export default function NavBar() {
           className="yt-btn-icon"
           aria-label="Toggle sidebar"
         >
-          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
-            <path d="M21 6H3V5h18v1zm0 5H3v1h18v-1zm0 6H3v1h18v-1z" />
-          </svg>
+          <Menu className="w-6 h-6" />
         </button>
         <Link
           href="/"
@@ -110,9 +109,7 @@ export default function NavBar() {
             className="h-10 w-16 flex items-center justify-center border border-l-0 border-[color:var(--yt-border)] rounded-r-full bg-[color:var(--yt-hover)] hover:bg-[color:var(--yt-chip-active)]/10"
             aria-label="Submit search"
           >
-            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
-              <path d="M20.87 20.17l-5.59-5.59C16.35 13.35 17 11.75 17 10c0-3.87-3.13-7-7-7s-7 3.13-7 7 3.13 7 7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.71zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" />
-            </svg>
+            <Search className="w-5 h-5" />
           </button>
         </div>
         <button
@@ -122,9 +119,7 @@ export default function NavBar() {
           title="Search with voice — coming soon"
           disabled
         >
-          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
-            <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 1 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z" />
-          </svg>
+          <Mic className="w-5 h-5" />
         </button>
       </form>
 
@@ -136,9 +131,7 @@ export default function NavBar() {
           aria-label="Create"
           title="Create"
         >
-          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
-            <path d="M14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2zm7-6H3v12h18V7zm0-2c1.1 0 2 .9 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h18z" />
-          </svg>
+          <Video className="w-6 h-6" />
           <span className="hidden lg:inline text-sm font-medium">Create</span>
         </Link>
 
@@ -182,9 +175,7 @@ export default function NavBar() {
             href="/login"
             className="ml-2 flex items-center gap-2 px-3 py-1.5 border border-[color:var(--yt-border)] rounded-full text-[color:var(--yt-blue)] text-sm font-medium hover:bg-[#def1ff]"
           >
-            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
-              <path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-8v2h8v14z" />
-            </svg>
+            <LogIn className="w-5 h-5" />
             Sign in
           </Link>
         )}

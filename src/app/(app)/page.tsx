@@ -6,6 +6,7 @@
 import MediaView from "@/components/MediaView";
 import { scanMediaDir } from "@/lib/media";
 import { getCurrentUser } from "@/lib/user";
+import { getAttributionMap } from "@/lib/channel";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,10 @@ export default async function HomePage({ searchParams }: PageProps) {
       )
     : items;
 
+  // Fetch real channel attribution for all visible items so the grid
+  // shows real uploader names instead of fake ones.
+  const attribution = await getAttributionMap(filtered.map((i) => i.path));
+
   return (
     <div className="px-4 sm:px-6 py-4">
       {search && (
@@ -38,7 +43,7 @@ export default async function HomePage({ searchParams }: PageProps) {
           )}
         </p>
       )}
-      <MediaView items={filtered} user={user} />
+      <MediaView items={filtered} user={user} attribution={attribution} />
     </div>
   );
 }

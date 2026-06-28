@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { X } from "lucide-react";
 
 interface GeneratedImage {
   path: string;
@@ -140,19 +141,7 @@ export default function GenerateContent() {
                 className="absolute -top-2 -right-2 bg-white border border-[color:var(--yt-border)] rounded-full w-6 h-6 flex items-center justify-center text-[color:var(--yt-text-secondary)] hover:text-[color:var(--yt-text)] transition-colors shadow-sm"
                 aria-label="Remove uploaded image"
               >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : (

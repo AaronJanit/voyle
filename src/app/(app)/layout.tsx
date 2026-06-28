@@ -3,6 +3,7 @@ import NavBar from "@/components/NavBar";
 import Sidebar from "@/components/Sidebar";
 import ChatWidget from "@/components/ChatWidget";
 import ShellOffset from "@/components/ShellOffset";
+import MakeYourOwnPopup from "@/components/MakeYourOwnPopup";
 
 /* YouTube-style shell: a fixed top bar plus a fixed sidebar that can be
  * collapsed to a 72px icon rail. Pages inside the (app) route group are
@@ -23,6 +24,7 @@ export default function AppLayout({
         </main>
       </ShellOffset>
       <ChatWidget />
+      <MakeYourOwnPopup />
     </SidebarProvider>
   );
 }

@@ -4,7 +4,7 @@ import { useSidebar } from "./SidebarContext";
 
 /** Adds left padding equal to the sidebar width so page content sits
  *  next to the rail instead of behind it. The sidebar is 240px when
- *  expanded and 72px when collapsed. */
+ *  expanded and 72px when collapsed. Transitions smoothly. */
 export default function ShellOffset({
   children,
 }: {
@@ -12,6 +12,8 @@ export default function ShellOffset({
 }) {
   const { collapsed } = useSidebar();
   return (
-    <div className={collapsed ? "pl-[72px]" : "pl-60"}>{children}</div>
+    <div className={`transition-[padding] duration-200 ease-in-out ${collapsed ? "pl-[72px]" : "pl-60"}`}>
+      {children}
+    </div>
   );
 }

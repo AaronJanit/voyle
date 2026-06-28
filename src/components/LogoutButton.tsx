@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 
 /** YouTube-style icon-only logout button. Used in the topbar avatar
  *  menu. Posts to /api/auth/logout then redirects to /login. */
@@ -25,19 +26,7 @@ export default function LogoutButton() {
       aria-label="Sign out"
       title="Sign out"
     >
-      <svg
-        viewBox="0 0 24 24"
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M16 17l5-5-5-5" />
-        <path d="M21 12H9" />
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      </svg>
+      <LogOut className="w-5 h-5" />
       <span>Sign out</span>
     </button>
   );

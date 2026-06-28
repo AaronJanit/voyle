@@ -1,6 +1,7 @@
 "use client";
 
 import { MediaItem } from "@/lib/media";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface LightboxProps {
   items: MediaItem[];
@@ -34,9 +35,7 @@ export default function Lightbox({
           className="text-white/90 hover:bg-white/10 rounded-full p-2 transition-colors"
           aria-label="Close"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X className="w-6 h-6" />
         </button>
         <div className="text-white/80 text-sm font-medium">
           {index + 1} / {items.length}
@@ -54,9 +53,7 @@ export default function Lightbox({
           className="absolute left-2 top-1/2 -translate-y-1/2 z-10 text-white/90 hover:bg-white/10 rounded-full p-2 transition-colors"
           aria-label="Previous"
         >
-          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft className="w-7 h-7" />
         </button>
       )}
 
@@ -70,9 +67,7 @@ export default function Lightbox({
           className="absolute right-2 top-1/2 -translate-y-1/2 z-10 text-white/90 hover:bg-white/10 rounded-full p-2 transition-colors"
           aria-label="Next"
         >
-          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <ChevronRight className="w-7 h-7" />
         </button>
       )}
 

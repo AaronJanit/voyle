@@ -1,11 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
 import "./globals.css";
+import ChatWidget from "@/components/ChatWidget";
 
 const roboto = Roboto({
   variable: "--font-roboto",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["300", "400", "500", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -13,17 +15,51 @@ export const metadata: Metadata = {
     default: "voyle",
     template: "%s · voyle",
   },
-  description: "Your photos, your AI, your way.",
+  description: "a little corner of the internet for photos, gifs, and vibes",
   applicationName: "voyle",
+  appleWebApp: {
+    capable: true,
+    title: "voyle",
+    statusBarStyle: "default",
+  },
+  keywords: ["photos", "gifs", "gallery", "ai", "voyle"],
+  authors: [{ name: "voyle" }],
+  creator: "voyle",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  ),
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    siteName: "voyle",
+    title: "voyle",
+    description: "a little corner of the internet for photos, gifs, and vibes",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "voyle",
+    description: "a little corner of the internet for photos, gifs, and vibes",
+  },
   icons: {
     icon: [
       {
-        // Red play-button favicon to match the YouTube-style logo.
         url:
-          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21.6 7.2a2.5 2.5 0 0 0-1.76-1.77C18.25 5 12 5 12 5s-6.25 0-7.84.43A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.76 1.77C5.75 19 12 19 12 19s6.25 0 7.84-.43a2.5 2.5 0 0 0 1.76-1.77A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8Z' fill='%23ff0000'/%3E%3Cpath d='M10 15l5-3-5-3z' fill='%23fff'/%3E%3C/svg%3E",
+          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230a84ff'/%3E%3Cstop offset='0.5' stop-color='%235e5ce6'/%3E%3Cstop offset='1' stop-color='%23bf5af2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='24' height='24' rx='6' fill='url(%23g)'/%3E%3Cpath d='M12 5l8 13h-3l-1.7-3H8.7L7 18H4z' fill='white'/%3E%3C/svg%3E",
       },
     ],
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 export default function RootLayout({
@@ -32,9 +68,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${roboto.variable} h-full`}>
-      <body className="min-h-full bg-[color:var(--yt-bg)] text-[color:var(--yt-text)]">
+    <html
+      lang="en"
+      className={`${roboto.variable} h-full antialiased`}
+      style={{ colorScheme: "light dark" }}
+    >
+      <body className="min-h-full flex flex-col bg-[var(--bg)] text-[var(--fg)]">
         {children}
+        <ChatWidget />
       </body>
     </html>
   );

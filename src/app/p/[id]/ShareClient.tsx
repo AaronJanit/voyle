@@ -2,6 +2,7 @@
 
 import { MediaItem } from "@/lib/media";
 import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, Link as LinkIcon } from "lucide-react";
 
 interface Props {
   item: MediaItem;
@@ -47,19 +48,7 @@ export default function ShareClient({ item, origin }: Props) {
             href={`${origin}/`}
             className="flex items-center gap-2 ios-callout text-white/80 hover:text-white"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <ChevronLeft className="w-5 h-5" />
             Library
           </a>
           <a
@@ -107,19 +96,7 @@ export default function ShareClient({ item, origin }: Props) {
           {/* Link row */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1 flex items-center gap-2 bg-white/10 rounded-[14px] px-3.5 py-3 border border-white/10">
-              <svg
-                className="w-4 h-4 text-white/50 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13.828 10.172a4 4 0 015.656 0l1.415 1.415a4 4 0 010 5.656l-3 3a4 4 0 01-5.656 0M10.172 13.828a4 4 0 01-5.656 0l-1.415-1.415a4 4 0 010-5.656l3-3a4 4 0 015.656 0"
-                />
-              </svg>
+              <LinkIcon className="w-4 h-4 text-white/50 flex-shrink-0" />
               <code className="text-[13px] text-white/70 truncate flex-1 font-mono">
                 {pageUrl}
               </code>

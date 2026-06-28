@@ -1,3 +1,5 @@
+export const metadata = { title: "Create" };
+
 export const dynamic = "force-dynamic";
 
 export default function GenerateLayout({

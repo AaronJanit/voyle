@@ -12,7 +12,6 @@ export default function ShareClient({ item, origin }: Props) {
   const mediaUrl = `${origin}/api/media/file/${item.path}`;
   const pageUrl = `${origin}/p/${encodeURIComponent(item.path)}`;
   const embedUrl = `${origin}/embed/${encodeURIComponent(item.path)}`;
-  const oembedUrl = `${origin}/api/oembed?url=${encodeURIComponent(pageUrl)}`;
 
   const [copied, setCopied] = useState<"link" | "embed" | null>(null);
 
@@ -20,7 +19,6 @@ export default function ShareClient({ item, origin }: Props) {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      // Fallback for older browsers
       const ta = document.createElement("textarea");
       ta.value = text;
       document.body.appendChild(ta);
@@ -32,7 +30,6 @@ export default function ShareClient({ item, origin }: Props) {
     setTimeout(() => setCopied(null), 1800);
   }, []);
 
-  // Keyboard shortcuts: Esc to go home, arrows for prev/next
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") window.location.href = `${origin}/`;
@@ -42,29 +39,36 @@ export default function ShareClient({ item, origin }: Props) {
   }, [origin]);
 
   return (
-    <main className="min-h-screen bg-black text-white flex flex-col">
-      {/* Top bar */}
-      <header className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-white/10">
-        <a
-          href={`${origin}/`}
-          className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          voyle
-        </a>
-        <a
-          href={`${origin}/`}
-          className="text-white/60 hover:text-white text-sm transition-colors"
-        >
-          open full gallery →
-        </a>
+    <div className="min-h-screen flex flex-col bg-black text-white">
+      {/* iOS-style sticky nav */}
+      <header className="sticky top-0 z-30 bg-black/60 backdrop-blur-xl border-b border-white/10">
+        <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
+          <a
+            href={`${origin}/`}
+            className="flex items-center gap-2 ios-callout text-white/80 hover:text-white"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Library
+          </a>
+          <a
+            href={`${origin}/`}
+            className="ios-callout text-white/60 hover:text-white"
+          >
+            Open gallery →
+          </a>
+        </div>
       </header>
 
       {/* Media */}
@@ -76,22 +80,20 @@ export default function ShareClient({ item, origin }: Props) {
               controls
               autoPlay
               playsInline
-              className="max-w-full max-h-[70vh] rounded-lg shadow-2xl"
+              className="max-w-full max-h-[70vh] rounded-[18px] shadow-2xl"
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={mediaUrl}
               alt={item.name}
-              className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl"
+              className="max-w-full max-h-[70vh] object-contain rounded-[18px] shadow-2xl"
             />
           )}
 
           <div className="mt-6 text-center max-w-2xl">
-            <h1 className="text-lg sm:text-xl font-medium text-white/90 break-words">
-              {item.name}
-            </h1>
-            <p className="text-white/50 text-xs mt-1">
+            <h1 className="ios-title text-white/90 break-words">{item.name}</h1>
+            <p className="ios-footnote text-white/50 mt-1">
               {item.isGenerated ? "AI generated" : item.type} ·{" "}
               {(item.size / 1024 / 1024).toFixed(2)} MB
             </p>
@@ -99,13 +101,14 @@ export default function ShareClient({ item, origin }: Props) {
         </div>
       </div>
 
-      {/* Share bar */}
-      <footer className="border-t border-white/10 bg-black/40 backdrop-blur px-4 sm:px-6 py-4">
+      {/* Share sheet — iOS style */}
+      <footer className="border-t border-white/10 bg-black/40 backdrop-blur-xl px-4 sm:px-6 py-5">
         <div className="max-w-3xl mx-auto space-y-3">
+          {/* Link row */}
           <div className="flex flex-col sm:flex-row gap-2">
-            <div className="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+            <div className="flex-1 flex items-center gap-2 bg-white/10 rounded-[14px] px-3.5 py-3 border border-white/10">
               <svg
-                className="w-4 h-4 text-white/40 flex-shrink-0"
+                className="w-4 h-4 text-white/50 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -117,21 +120,22 @@ export default function ShareClient({ item, origin }: Props) {
                   d="M13.828 10.172a4 4 0 015.656 0l1.415 1.415a4 4 0 010 5.656l-3 3a4 4 0 01-5.656 0M10.172 13.828a4 4 0 01-5.656 0l-1.415-1.415a4 4 0 010-5.656l3-3a4 4 0 015.656 0"
                 />
               </svg>
-              <code className="text-xs text-white/70 truncate flex-1 font-mono">
+              <code className="text-[13px] text-white/70 truncate flex-1 font-mono">
                 {pageUrl}
               </code>
             </div>
             <button
               onClick={() => copy(pageUrl, "link")}
-              className="px-4 py-2 bg-white text-black text-sm font-medium rounded-lg hover:bg-white/90 transition-colors whitespace-nowrap"
+              className="ios-btn-primary !py-2.5 !px-5 !text-[15px] whitespace-nowrap"
             >
-              {copied === "link" ? "copied ✓" : "copy link"}
+              {copied === "link" ? "Copied ✓" : "Copy link"}
             </button>
           </div>
 
+          {/* Embed row */}
           <div className="flex flex-col sm:flex-row gap-2">
-            <div className="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-              <code className="text-xs text-white/70 truncate flex-1 font-mono">
+            <div className="flex-1 flex items-center gap-2 bg-white/5 rounded-[14px] px-3.5 py-3 border border-white/10">
+              <code className="text-[12px] text-white/60 truncate flex-1 font-mono">
                 {`<iframe src="${embedUrl}" width="640" height="480" allowfullscreen></iframe>`}
               </code>
             </div>
@@ -142,46 +146,56 @@ export default function ShareClient({ item, origin }: Props) {
                   "embed"
                 )
               }
-              className="px-4 py-2 bg-white/10 text-white text-sm font-medium rounded-lg hover:bg-white/20 transition-colors whitespace-nowrap border border-white/10"
+              className="ios-btn-secondary !py-2.5 !px-5 !text-[15px] !bg-white/15 !text-white whitespace-nowrap"
             >
-              {copied === "embed" ? "copied ✓" : "copy embed"}
+              {copied === "embed" ? "Copied ✓" : "Copy embed"}
             </button>
           </div>
 
-          {/* Social share targets */}
-          <div className="flex items-center gap-2 pt-1">
-            <span className="text-xs text-white/40">share:</span>
-            <a
-              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(item.name)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-white/70 hover:text-white underline underline-offset-2"
-            >
-              twitter
-            </a>
-            <span className="text-white/20">·</span>
-            <a
-              href={`https://www.reddit.com/submit?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(item.name)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-white/70 hover:text-white underline underline-offset-2"
-            >
-              reddit
-            </a>
-            <span className="text-white/20">·</span>
-            <a
-              href={`mailto:?subject=${encodeURIComponent(item.name)}&body=${encodeURIComponent(pageUrl)}`}
-              className="text-xs text-white/70 hover:text-white underline underline-offset-2"
-            >
-              email
-            </a>
-            <span className="text-white/20">·</span>
-            <span className="text-xs text-white/40">
-              oembed: <code className="text-white/50">{oembedUrl}</code>
-            </span>
+          {/* Social row — iOS app icon style */}
+          <div className="flex items-center gap-3 pt-2">
+            <span className="ios-footnote text-white/40">Share:</span>
+            <div className="flex gap-2">
+              <SocialChip
+                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(item.name)}`}
+                label="Twitter"
+                color="bg-[#1d9bf0]"
+              />
+              <SocialChip
+                href={`https://www.reddit.com/submit?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(item.name)}`}
+                label="Reddit"
+                color="bg-[#ff4500]"
+              />
+              <SocialChip
+                href={`mailto:?subject=${encodeURIComponent(item.name)}&body=${encodeURIComponent(pageUrl)}`}
+                label="Mail"
+                color="bg-[#0a84ff]"
+              />
+            </div>
           </div>
         </div>
       </footer>
-    </main>
+    </div>
+  );
+}
+
+function SocialChip({
+  href,
+  label,
+  color,
+}: {
+  href: string;
+  label: string;
+  color: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`w-9 h-9 rounded-full ${color} flex items-center justify-center text-white text-[12px] font-semibold active:scale-95 transition`}
+    >
+      {label[0]}
+    </a>
   );
 }

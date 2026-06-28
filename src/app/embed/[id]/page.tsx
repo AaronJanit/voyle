@@ -1,7 +1,5 @@
-// Voyle — embeddable iframe viewer
-// Renders a single media item with the absolute minimum chrome. Designed to
-// be embedded in other sites via <iframe>. Now auth-gated: unauthenticated
-// visitors are redirected to /login (media only loads behind a session).
+// Voyle — embeddable iframe viewer (iOS-styled)
+// Renders a single media item with the absolute minimum chrome.
 
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
@@ -11,13 +9,10 @@ import { getCurrentUser } from "@/lib/user";
 
 export const dynamic = "force-dynamic";
 
-// Allow this page to be framed from anywhere (X-Frame-Options: DENY would
-// block iframes — we want the opposite). Same-origin policy still protects
-// the parent from anything we send.
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "voyle embed",
-    robots: { index: false, follow: false }, // don't index embed URLs
+    robots: { index: false, follow: false },
   };
 }
 
@@ -31,7 +26,6 @@ function findItem(id: string) {
 }
 
 export default async function EmbedPage({ params }: PageProps) {
-  // Auth gate — media only loads behind a valid session.
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -47,8 +41,8 @@ export default async function EmbedPage({ params }: PageProps) {
   const pageUrl = `${origin}/p/${encodeURIComponent(item.path)}`;
 
   return (
-    <main className="min-h-screen bg-black flex flex-col">
-      {/* Media — fills the iframe */}
+    <div className="min-h-screen bg-black flex flex-col">
+      {/* Media */}
       <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
         {item.type === "video" ? (
           <video
@@ -58,29 +52,29 @@ export default async function EmbedPage({ params }: PageProps) {
             muted
             loop
             playsInline
-            className="max-w-full max-h-full object-contain"
-            style={{ maxHeight: "calc(100vh - 32px)" }}
+            className="max-w-full max-h-full object-contain rounded-[14px]"
+            style={{ maxHeight: "calc(100vh - 40px)" }}
           />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={mediaUrl}
             alt={item.name}
-            className="max-w-full max-h-full object-contain"
-            style={{ maxHeight: "calc(100vh - 32px)" }}
+            className="max-w-full max-h-full object-contain rounded-[14px]"
+            style={{ maxHeight: "calc(100vh - 40px)" }}
             loading="eager"
             decoding="async"
           />
         )}
       </div>
 
-      {/* Tiny footer credit — opens the share page in a new tab */}
-      <footer className="flex items-center justify-between px-3 py-1.5 bg-black/80 backdrop-blur border-t border-white/10 text-[10px] text-white/50 leading-none">
+      {/* Footer */}
+      <footer className="flex items-center justify-between px-3 py-1.5 bg-black/70 backdrop-blur-xl border-t border-white/10 text-[11px] text-white/55 leading-none">
         <a
           href={pageUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-white/80 transition-colors truncate max-w-[70%]"
+          className="hover:text-white/90 transition-colors truncate max-w-[70%]"
         >
           {item.name}
         </a>
@@ -88,11 +82,12 @@ export default async function EmbedPage({ params }: PageProps) {
           href={origin}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-white/80 transition-colors whitespace-nowrap"
+          className="hover:text-white/90 transition-colors whitespace-nowrap flex items-center gap-1"
         >
-          voyle ↗
+          <span className="font-semibold">voyle</span>
+          <span>↗</span>
         </a>
       </footer>
-    </main>
+    </div>
   );
 }

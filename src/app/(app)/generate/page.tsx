@@ -5,8 +5,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 
 interface GeneratedImage {
-  path: string;
-  filename: string;
+  image: string;
   prompt: string;
   mode: string;
 }
@@ -89,8 +88,7 @@ export default function GenerateContent() {
       if (res.ok) {
         setGallery((prev) => [
           {
-            path: data.path,
-            filename: data.filename,
+            image: data.image,
             prompt,
             mode: data.mode || "text2img",
           },
@@ -242,18 +240,15 @@ export default function GenerateContent() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-            {gallery.map((img) => (
-              <article key={img.filename} className="group">
-                <Link
-                  href={`/p/${encodeURIComponent(img.filename)}`}
-                  className="block aspect-video rounded-xl overflow-hidden bg-[color:var(--yt-chip)]"
-                >
+            {gallery.map((img, i) => (
+              <article key={i} className="group">
+                <div className="block aspect-video rounded-xl overflow-hidden bg-[color:var(--yt-chip)]">
                   <img
-                    src={img.path}
+                    src={img.image}
                     alt={img.prompt}
                     className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
                   />
-                </Link>
+                </div>
                 <h3 className="text-sm font-medium mt-3 line-clamp-2">
                   {img.prompt}
                 </h3>

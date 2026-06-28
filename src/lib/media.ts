@@ -76,7 +76,9 @@ let cached: MediaItem[] | null = null;
 let cacheTime = 0;
 const CACHE_TTL_MS = 5000; // 5 seconds
 
-/** Scan the /media directory and return all supported media items. */
+/** Scan the /media directory and return all supported media items.
+ *  AI-generated images (filenames starting with "gen-") are excluded
+ *  so they don't appear on the home screen. */
 export function scanMediaDir(): MediaItem[] {
   const now = Date.now();
   if (cached && now - cacheTime < CACHE_TTL_MS) {
@@ -84,9 +86,9 @@ export function scanMediaDir(): MediaItem[] {
   }
 
   const mediaDir = join(process.cwd(), "media");
-  cached = scanDir(mediaDir, mediaDir).sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, { numeric: true })
-  );
+  cached = scanDir(mediaDir, mediaDir)
+    .filter((item) => !item.isGenerated)
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   cacheTime = now;
   return cached;
 }

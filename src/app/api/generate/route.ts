@@ -1,14 +1,11 @@
 // Voyle — image generation API
-// POST /api/generate → proxies to Cloudflare Workers AI, saves image to /media
+// POST /api/generate → proxies to Cloudflare Workers AI, returns image as base64
 // Accepts multipart/form-data with:
 //   - prompt (string, required)
 //   - image (file, optional — for img2img / generation context)
+// Generated images are NOT saved to /media — they're returned inline only.
 
 import { NextRequest, NextResponse } from "next/server";
-import { writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
-import { getCurrentUser } from "@/lib/user";
-import { recordUpload } from "@/lib/channel";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,39 +90,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Generation failed: ${errText}` }, { status: 502 });
   }
 
-  // Get the image bytes
+  // Get the image bytes — return as base64 data URL, do NOT save to /media
   const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-
-  // Generate a filename from the prompt (sanitized) + timestamp
-  const slug = prompt
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-  const timestamp = Date.now();
-  const prefix = imageFile ? "gen-img2img" : "gen";
-  const filename = `${prefix}-${slug}-${timestamp}.jpg`;
-  const filepath = join(process.cwd(), "media", filename);
-
-  // Ensure /media exists
-  const mediaDir = join(process.cwd(), "media");
-  if (!existsSync(mediaDir)) {
-    mkdirSync(mediaDir, { recursive: true });
-  }
-
-  // Save the image to /media so it appears in the catalog
-  writeFileSync(filepath, imageBuffer);
-
-  // Record attribution (best-effort — don't fail the upload if this breaks)
-  const user = await getCurrentUser();
-  if (user) {
-    await recordUpload(filename, user.email, user.name);
-  }
+  const base64 = imageBuffer.toString("base64");
+  const dataUrl = `data:image/jpeg;base64,${base64}`;
 
   return NextResponse.json({
     success: true,
-    filename,
-    path: `/api/media/file/${filename}`,
+    image: dataUrl,
     size: imageBuffer.length,
     mode: imageFile ? "img2img" : "text2img",
   });

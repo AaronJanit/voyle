@@ -26,7 +26,7 @@ export default function ChatWidget() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  // Don't render on the login page or dedicated chat pages (after all hooks to avoid hook order issues)
+  // Don't render on login / dedicated chat pages (hooks above must run first)
   if (pathname === "/login" || pathname === "/chat" || pathname === "/spencer") return null;
 
   async function sendMessage(e: React.FormEvent) {
@@ -39,7 +39,6 @@ export default function ChatWidget() {
     setInput("");
     setStreaming(true);
 
-    // Add empty assistant message that we'll fill as tokens arrive
     setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
     try {
@@ -52,7 +51,6 @@ export default function ChatWidget() {
         }),
       });
 
-      // Capture conversation ID from headers
       const convId = res.headers.get("X-Conversation-Id");
       if (convId) setConversationId(convId);
 
@@ -101,114 +99,162 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating action button — iOS-style circle */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-40 bg-[#1a73e8] text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-[#1765cc] hover:shadow-xl transition-all"
+          className="fixed z-40 bottom-24 right-4 md:bottom-6 md:right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] text-white flex items-center justify-center shadow-[0_8px_24px_rgba(10,132,255,0.4)] active:scale-95 transition"
           aria-label="Open chat"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-7 h-7"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              strokeWidth={1.8}
+              d="M21 12a8 8 0 01-11.5 7.2L4 21l1.8-5.5A8 8 0 1121 12z"
             />
           </svg>
         </button>
       )}
 
-      {/* Chat panel */}
+      {/* Chat sheet — iOS modal style */}
       {open && (
-        <div className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 z-40 w-full sm:w-96 h-full sm:h-[32rem] sm:max-h-[80vh] bg-neutral-900 border border-neutral-800 sm:rounded-2xl flex flex-col shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-neutral-900">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full" />
-              <span className="text-white font-medium text-sm">voyle</span>
-              <span className="text-neutral-500 text-xs">— your host</span>
+        <div
+          className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-end sm:items-center justify-center sm:justify-end sm:p-6"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="bg-[var(--bg-elev)] w-full sm:w-[400px] h-[90vh] sm:h-[640px] sm:max-h-[85vh] sm:rounded-[22px] rounded-t-[22px] flex flex-col overflow-hidden shadow-2xl ios-spring-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drag handle (mobile) */}
+            <div className="sm:hidden flex justify-center pt-2">
+              <div className="w-9 h-1 rounded-full bg-[var(--border-strong)]" />
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="text-neutral-500 hover:text-white transition-colors"
-              aria-label="Close chat"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-            {messages.length === 0 && (
-              <div className="text-center text-neutral-600 text-sm py-8">
-                <p className="mb-1">👋 hey. i&apos;m voyle.</p>
-                <p>say something. i dare you.</p>
-              </div>
-            )}
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
-                    msg.role === "user"
-                      ? "bg-white text-black rounded-br-sm"
-                      : "bg-neutral-800 text-neutral-100 rounded-bl-sm"
-                  }`}
-                >
-                  {msg.content || (
-                    <span className="inline-flex gap-1">
-                      <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </span>
-                  )}
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] flex items-center justify-center text-white text-[14px] font-semibold shadow-sm">
+                  V
+                </div>
+                <div>
+                  <div className="ios-headline leading-tight">Voyle</div>
+                  <div className="ios-caption leading-tight flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--success)]" />
+                    Online
+                  </div>
                 </div>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="w-8 h-8 rounded-full bg-[var(--bg)] text-[var(--fg-muted)] flex items-center justify-center"
+                aria-label="Close chat"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.4}
+                    d="M6 6l12 12M6 18L18 6"
+                  />
+                </svg>
+              </button>
+            </div>
 
-          {/* Input */}
-          <form
-            onSubmit={sendMessage}
-            className="flex items-center gap-2 px-4 py-3 border-t border-neutral-800 bg-neutral-900"
-          >
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="type something..."
-              disabled={streaming}
-              className="flex-1 bg-neutral-800 text-white text-sm px-3 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:border-neutral-500 transition-colors placeholder:text-neutral-500"
-            />
-            <button
-              type="submit"
-              disabled={streaming || !input.trim()}
-              className="bg-white text-black p-2 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-neutral-200 transition-colors"
-              aria-label="Send"
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+              {messages.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0a84ff] via-[#5e5ce6] to-[#bf5af2] flex items-center justify-center text-white text-2xl font-semibold mb-3 shadow-lg">
+                    V
+                  </div>
+                  <p className="ios-headline mb-1">Hey, I'm Voyle.</p>
+                  <p className="ios-subhead max-w-xs">
+                    Your AI host. Say something — I dare you.
+                  </p>
+                </div>
+              )}
+              {messages.map((msg, i) => (
+                <MessageBubble key={i} msg={msg} />
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <form
+              onSubmit={sendMessage}
+              className="flex items-center gap-2 px-3 py-2.5 border-t border-[var(--border)]"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+              <div className="flex-1 bg-[var(--bg)] rounded-[20px] px-3.5 py-2">
+                <input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="iMessage Voyle…"
+                  disabled={streaming}
+                  className="w-full bg-transparent text-[16px] outline-none text-[var(--fg)] placeholder:text-[var(--fg-faint)]"
                 />
-              </svg>
-            </button>
-          </form>
+              </div>
+              <button
+                type="submit"
+                disabled={streaming || !input.trim()}
+                className="w-9 h-9 rounded-full bg-[var(--tint)] text-white flex items-center justify-center disabled:opacity-30 active:scale-90 transition"
+                aria-label="Send"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.4}
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  />
+                </svg>
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </>
+  );
+}
+
+function MessageBubble({ msg }: { msg: Message }) {
+  const isUser = msg.role === "user";
+  return (
+    <div
+      className={`flex ios-spring-in ${isUser ? "justify-end" : "justify-start"}`}
+    >
+      <div
+        className={`max-w-[80%] px-3.5 py-2 rounded-[18px] text-[15px] leading-snug whitespace-pre-wrap break-words ${
+          isUser
+            ? "bg-[var(--tint)] text-white rounded-br-[5px]"
+            : "bg-[var(--bg)] text-[var(--fg)] rounded-bl-[5px]"
+        }`}
+      >
+        {msg.content || (
+          <span className="ios-dot-loader">
+            <span />
+            <span />
+            <span />
+          </span>
+        )}
+      </div>
+    </div>
   );
 }

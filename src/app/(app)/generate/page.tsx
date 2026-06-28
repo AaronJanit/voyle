@@ -53,11 +53,9 @@ export default function GenerateContent() {
     setLoading(true);
 
     try {
-      // Use multipart form data if an image was uploaded, otherwise JSON
       let res: Response;
 
       if (uploadedImage) {
-        // Convert base64 data URL back to a File
         const response = await fetch(uploadedImage);
         const blob = await response.blob();
         const file = new File([blob], uploadedFileName || "upload.jpg", {
@@ -103,110 +101,198 @@ export default function GenerateContent() {
     }
   }
 
+  const suggestions = [
+    "a neon city at night in the rain",
+    "a cozy cabin in a snowy forest",
+    "an astronaut riding a whale through space",
+    "a vintage film photo of a parisian café",
+    "a dragon made of flowers",
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Hero section */}
-      <section className="border-b border-[#e0e0e0] bg-[#f8f9fa]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 text-center">
-          <h1 className="text-4xl sm:text-5xl font-normal text-[#202124] tracking-tight mb-3">
-            Create with AI
-          </h1>
-          <p className="text-[#5f6368] text-base mb-1">
-            Type anything. Get a picture. No limits.
-          </p>
-          <p className="text-[#80868b] text-sm">
-            powered by Stable Diffusion XL
+    <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+      {/* iOS-style sticky large-title nav */}
+      <header className="sticky top-0 z-30 ios-glass">
+        <div className="px-5 pt-3 pb-3 flex items-end justify-between">
+          <div>
+            <h1 className="ios-large-title leading-none">Create</h1>
+            <p className="ios-subhead mt-1">Generate images with AI</p>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] flex items-center justify-center shadow-sm">
+            <svg
+              className="w-5 h-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
+            </svg>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 pt-6 pb-24 md:pb-12">
+        {/* Hero card */}
+        <div className="ios-card p-6 mb-6 text-center">
+          <div className="text-[15px] text-[var(--fg-muted)] mb-1">
+            Stable Diffusion XL
+          </div>
+          <h2 className="ios-title">
+            {uploadedImage ? "Transform your image" : "What should we make?"}
+          </h2>
+          <p className="ios-callout mt-1">
+            {uploadedImage
+              ? "Describe how you want to change it."
+              : "Describe anything. No limits."}
           </p>
         </div>
-      </section>
 
-      {/* Generator */}
-      <section className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-8">
-        <form onSubmit={handleGenerate} className="space-y-4">
-          {/* Image upload area */}
-          <div>
-            <label className="text-[#5f6368] text-xs mb-2 block">
-              reference image (optional — AI will use it as context)
-            </label>
-            {uploadedImage ? (
-              <div className="relative inline-block">
-                <img
-                  src={uploadedImage}
-                  alt="Upload preview"
-                  className="max-h-32 rounded-lg border border-[#dadce0]"
-                />
-                <button
-                  type="button"
-                  onClick={clearUploadedImage}
-                  className="absolute -top-2 -right-2 bg-white border border-[#dadce0] rounded-full w-6 h-6 flex items-center justify-center text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors shadow-sm"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+        {/* Reference image picker — iOS list */}
+        <div className="ios-card overflow-hidden mb-4">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div>
+              <div className="ios-caption uppercase tracking-wider mb-0.5">
+                Reference
               </div>
+              <div className="ios-headline">
+                {uploadedImage ? uploadedFileName : "Optional image"}
+              </div>
+            </div>
+            {uploadedImage ? (
+              <button
+                type="button"
+                onClick={clearUploadedImage}
+                className="w-8 h-8 rounded-full bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)]"
+                aria-label="Remove image"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.2}
+                    d="M6 6l12 12M6 18L18 6"
+                  />
+                </svg>
+              </button>
             ) : (
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={loading}
-                className="w-full border-2 border-dashed border-[#dadce0] rounded-lg py-6 px-4 text-[#5f6368] text-sm hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors flex flex-col items-center gap-2 disabled:opacity-40"
+                className="ios-btn-secondary !py-2 !px-4 !text-[14px]"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>click to upload an image</span>
-                <span className="text-xs text-[#80868b]">jpg, png, gif · max 4MB</span>
+                Add
               </button>
             )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
+          </div>
+          {uploadedImage && (
+            <>
+              <div className="ios-hairline" />
+              <div className="p-3 bg-[var(--bg)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={uploadedImage}
+                  alt="Upload preview"
+                  className="max-h-48 mx-auto rounded-[12px]"
+                />
+              </div>
+            </>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+        </div>
+
+        {/* Prompt + generate */}
+        <form onSubmit={handleGenerate} className="space-y-3 mb-6">
+          <div className="ios-card overflow-hidden">
+            <div className="px-4 py-3">
+              <div className="ios-caption uppercase tracking-wider mb-1">
+                Prompt
+              </div>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={
+                  uploadedImage
+                    ? "make it cinematic…"
+                    : "a cute cat wearing a tiny hat…"
+                }
+                autoFocus
+                disabled={loading}
+                rows={3}
+                className="w-full bg-transparent text-[17px] outline-none resize-none text-[var(--fg)] placeholder:text-[var(--fg-faint)]"
+              />
+            </div>
           </div>
 
-          {/* Prompt input */}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder={uploadedImage ? "describe how to transform the image..." : "describe anything..."}
-              autoFocus
-              disabled={loading}
-              className="flex-1 px-4 py-3 bg-white border border-[#dadce0] rounded-lg text-[#202124] text-sm focus:outline-none focus:border-[#1a73e8] focus:border-2 transition-colors placeholder:text-[#80868b]"
-            />
-            <button
-              type="submit"
-              disabled={loading || !prompt.trim()}
-              className="px-6 py-3 bg-[#1a73e8] text-white rounded-lg font-medium hover:bg-[#1765cc] hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm whitespace-nowrap"
-            >
-              {loading ? "generating..." : "generate"}
-            </button>
-          </div>
+          {error && (
+            <div className="ios-card p-3 text-[var(--danger)] text-[15px] text-center ios-spring-in">
+              {error}
+            </div>
+          )}
 
-          {error && <p className="text-[#d93025] text-sm">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading || !prompt.trim()}
+            className="ios-btn-primary w-full flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <span className="ios-dot-loader">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                Generating…
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.2}
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                  />
+                </svg>
+                Generate
+              </>
+            )}
+          </button>
         </form>
 
-        {/* Suggestion chips */}
+        {/* Suggestions — iOS-style chips */}
         {!loading && gallery.length === 0 && (
-          <div className="mt-6">
-            <p className="text-[#5f6368] text-xs mb-3">try one of these:</p>
+          <div className="mb-2">
+            <div className="ios-caption uppercase tracking-wider mb-2 px-1">
+              Try one of these
+            </div>
             <div className="flex flex-wrap gap-2">
-              {[
-                "a neon city at night in the rain",
-                "a cozy cabin in a snowy forest",
-                "an astronaut riding a whale through space",
-                "a vintage film photo of a parisian café",
-                "a dragon made of flowers",
-              ].map((s) => (
+              {suggestions.map((s) => (
                 <button
                   key={s}
                   onClick={() => setPrompt(s)}
-                  className="px-3 py-1.5 bg-white border border-[#dadce0] rounded-full text-[#5f6368] text-xs hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors"
+                  className="px-3.5 py-1.5 bg-[var(--bg-elev)] border border-[var(--border)] rounded-full text-[var(--fg-muted)] text-[14px] hover:border-[var(--tint)] hover:text-[var(--tint)] active:scale-95 transition"
                 >
                   {s}
                 </button>
@@ -214,57 +300,38 @@ export default function GenerateContent() {
             </div>
           </div>
         )}
-      </section>
+      </div>
 
-      {/* Loading state */}
-      {loading && (
-        <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 pb-8">
-          <div className="bg-[#f8f9fa] border border-[#e0e0e0] rounded-2xl p-12 flex flex-col items-center gap-4">
-            <div className="flex gap-1.5">
-              <span className="w-2.5 h-2.5 bg-[#1a73e8] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-2.5 h-2.5 bg-[#1a73e8] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="w-2.5 h-2.5 bg-[#1a73e8] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-            <p className="text-[#5f6368] text-sm">
-              {uploadedImage ? "transforming your image..." : "painting your image..."}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Gallery of generated images */}
+      {/* Gallery */}
       {gallery.length > 0 && (
-        <section className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 pb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[#5f6368] text-sm">
-              {gallery.length} {gallery.length === 1 ? "image" : "images"} generated this session
-            </h2>
+        <section className="max-w-[1600px] mx-auto w-full px-4 sm:px-6 pb-24 md:pb-12">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h2 className="ios-title">This session</h2>
             <Link
               href="/"
-              className="text-[#1a73e8] hover:text-[#1765cc] text-sm font-medium transition-colors"
+              className="ios-btn-secondary !py-1.5 !px-3.5 !text-[13px]"
             >
-              view full catalog →
+              Open library
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {gallery.map((img) => (
               <div
                 key={img.filename}
-                className="rounded-lg overflow-hidden bg-white border border-[#e0e0e0] group relative shadow-sm hover:shadow-md transition-shadow"
+                className="ios-card overflow-hidden group"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={img.path}
                   alt={img.prompt}
-                  className="w-full h-auto"
+                  className="w-full aspect-square object-cover"
                 />
                 <div className="p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[#80868b] text-[10px] uppercase tracking-wide">
-                      {img.mode === "img2img" ? "img → img" : "text → img"}
-                    </span>
+                  <div className="ios-caption uppercase tracking-wider mb-1">
+                    {img.mode === "img2img" ? "Image → Image" : "Text → Image"}
                   </div>
-                  <p className="text-[#5f6368] text-xs line-clamp-2">{img.prompt}</p>
+                  <p className="ios-subhead line-clamp-2">{img.prompt}</p>
                 </div>
               </div>
             ))}

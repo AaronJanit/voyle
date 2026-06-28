@@ -1,3 +1,5 @@
+export const metadata = { title: "Chat to Voyle" };
+
 export const dynamic = "force-dynamic";
 
 export default function ChatLayout({

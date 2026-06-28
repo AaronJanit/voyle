@@ -15,7 +15,7 @@ type Step = {
 const steps: Step[] = [
   {
     num: "01",
-    accent: "from-violet-500 to-fuchsia-500",
+    accent: "from-[#0a84ff] to-[#5e5ce6]",
     title: "Grab a teacher photo",
     body: (
       <>
@@ -24,7 +24,7 @@ const steps: Step[] = [
           href="https://mesivta.co.uk"
           target="_blank"
           rel="noreferrer"
-          className="font-medium text-[#202124] underline decoration-[#dadce0] underline-offset-4 hover:decoration-[#1a73e8]"
+          className="text-[var(--tint)] font-medium underline-offset-4 decoration-2"
         >
           mesivta.co.uk
         </a>{" "}
@@ -34,53 +34,53 @@ const steps: Step[] = [
   },
   {
     num: "02",
-    accent: "from-sky-500 to-indigo-500",
+    accent: "from-[#5e5ce6] to-[#bf5af2]",
     title: "Edit it with AI",
     body: (
       <>
         Upload it to{" "}
-        <span className="font-medium text-[#202124]">ChatGPT</span>{" "}
-        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200/70 align-middle">
-          recommended
+        <span className="font-semibold text-[var(--fg)]">ChatGPT</span>
+        <span className="ml-2 inline-flex items-center rounded-full bg-[var(--success)]/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--success)] uppercase tracking-wide">
+          Recommended
         </span>
         ,{" "}
-        <span className="font-medium text-[#202124]">Microsoft Copilot</span>, or{" "}
-        <span className="font-medium text-[#202124]">Gemini</span> and describe the
+        <span className="font-semibold text-[var(--fg)]">Copilot</span>, or{" "}
+        <span className="font-semibold text-[var(--fg)]">Gemini</span> and describe the
         edits you want.
       </>
     ),
   },
   {
     num: "03",
-    accent: "from-amber-500 to-rose-500",
+    accent: "from-[#ff9500] to-[#ff3b30]",
     title: "Make it move",
     body: (
       <>
-        Create an account on{" "}
+        Open{" "}
         <a
           href="https://chat.qwen.ai"
           target="_blank"
           rel="noreferrer"
-          className="font-medium text-[#202124] underline decoration-[#dadce0] underline-offset-4 hover:decoration-[#1a73e8]"
+          className="text-[var(--tint)] font-medium underline-offset-4 decoration-2"
         >
           chat.qwen.ai
         </a>
-        , paste your generated picture, then use the{" "}
-        <span className="inline-flex items-center gap-1 rounded-md bg-[#f1f3f4] px-1.5 py-0.5 text-[11px] font-medium text-[#3c4043] ring-1 ring-[#dadce0]">
+        , paste your image, then tap the{" "}
+        <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-[var(--bg)] text-[var(--fg-muted)] text-[12px] font-bold align-middle">
           +
         </span>{" "}
-        menu to choose <span className="font-medium text-[#202124]">video</span>{" "}
-        and describe what you want it to do.
+        menu to choose{" "}
+        <span className="font-semibold text-[var(--fg)]">Video</span> and describe what you want it to do.
       </>
     ),
   },
   {
     num: "04",
-    accent: "from-emerald-500 to-teal-500",
+    accent: "from-[#34c759] to-[#30d158]",
     title: "Share it here",
     body: (
       <>
-        Upload your finished clip or picture back to this site and it&apos;ll live
+        Upload your finished clip or picture back to this site and it'll live
         alongside everything else in your library.
       </>
     ),
@@ -89,45 +89,48 @@ const steps: Step[] = [
 
 export default function MakeYourOwnPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fafbff] via-white to-[#f6f5ff]">
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        {/* Soft glow backdrop */}
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute -top-32 -left-24 h-96 w-96 rounded-full bg-violet-200/40 blur-3xl" />
-          <div className="absolute -top-20 right-0 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" />
-          <div className="absolute top-40 left-1/3 h-72 w-72 rounded-full bg-rose-200/30 blur-3xl" />
-        </div>
-
-        <div className="mx-auto max-w-4xl px-6 pt-16 pb-10 sm:pt-24 sm:pb-14 text-center">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-[#5f6368] ring-1 ring-[#e0e0e0] backdrop-blur">
+    <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+      {/* iOS-style sticky large title */}
+      <header className="sticky top-0 z-30 ios-glass">
+        <div className="px-5 pt-3 pb-3 flex items-end justify-between">
+          <div>
+            <h1 className="ios-large-title leading-none">Workflow</h1>
+            <p className="ios-subhead mt-1">Make your own · 4 steps</p>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--success)]/15 text-[var(--success)]">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--success)] opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--success)]" />
             </span>
-            new · 4-step workflow
-          </span>
-
-          <h1 className="mt-6 text-5xl font-light tracking-tight text-[#202124] sm:text-6xl">
-            Make your{" "}
-            <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-sky-500 bg-clip-text text-transparent font-normal">
-              own
+            <span className="ios-caption uppercase tracking-wider font-semibold">
+              New
             </span>
-          </h1>
+          </div>
+        </div>
+      </header>
 
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-[#5f6368] sm:text-lg">
-            Create your own AI vids + pics + gifs in four short steps. No
-            install, no setup — just a browser and a good idea.
-          </p>
+      <main className="flex-1 px-4 sm:px-6 pt-6 pb-24 md:pb-12">
+        <div className="max-w-4xl mx-auto">
+          {/* Hero */}
+          <section className="text-center mb-8 ios-slide-up">
+            <h2 className="ios-large-title mb-3">
+              Make your{" "}
+              <span className="bg-gradient-to-r from-[#0a84ff] via-[#bf5af2] to-[#ff9500] bg-clip-text text-transparent">
+                own
+              </span>
+            </h2>
+            <p className="ios-callout max-w-xl mx-auto">
+              Create your own AI vids + pics + gifs in four short steps. No
+              install, no setup — just a browser and a good idea.
+            </p>
+          </section>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="#workflow"
-              className="inline-flex items-center gap-2 rounded-full bg-[#202124] px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-black transition"
-            >
+          {/* CTA buttons — iOS style */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
+            <a href="#workflow" className="ios-btn-primary flex items-center gap-2">
               Start the workflow
               <svg
-                className="h-4 w-4"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -135,103 +138,44 @@ export default function MakeYourOwnPage() {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
+                  strokeWidth={2.2}
                   d="M19 9l-7 7-7-7"
                 />
               </svg>
             </a>
-            <Link
-              href="/generate"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-medium text-[#202124] ring-1 ring-[#dadce0] hover:ring-[#1a73e8] hover:text-[#1a73e8] transition"
-            >
+            <Link href="/generate" className="ios-btn-secondary">
               Or open the generator
             </Link>
           </div>
-        </div>
-      </section>
 
-      {/* Workflow */}
-      <section id="workflow" className="mx-auto max-w-5xl px-6 pb-20">
-        <div className="mb-8 flex items-center gap-3">
-          <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#dadce0] to-transparent" />
-          <span className="text-xs font-medium uppercase tracking-[0.2em] text-[#80868b]">
-            the workflow
-          </span>
-          <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#dadce0] to-transparent" />
-        </div>
-
-        <ol className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {steps.map((step, i) => (
-            <li
-              key={step.num}
-              className="group relative overflow-hidden rounded-2xl bg-white p-6 ring-1 ring-[#e8eaed] shadow-[0_1px_0_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition"
-            >
-              {/* gradient corner glow */}
-              <div
-                className={`pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-gradient-to-br ${step.accent} opacity-10 blur-2xl group-hover:opacity-20 transition`}
-              />
-
-              <div className="flex items-start gap-4">
-                <span
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${step.accent} text-sm font-semibold text-white shadow-sm`}
-                >
-                  {step.num}
-                </span>
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold text-[#202124]">
-                    {step.title}
-                  </h2>
-                  <p className="mt-1.5 text-sm leading-relaxed text-[#5f6368]">
-                    {step.body}
-                  </p>
-                </div>
-              </div>
-
-              {/* connector arrow on desktop */}
-              {i < steps.length - 1 && (
-                <div
-                  aria-hidden
-                  className="absolute -bottom-3 left-1/2 hidden h-3 w-3 -translate-x-1/2 rotate-45 bg-white ring-1 ring-[#e8eaed] md:hidden"
-                />
-              )}
-            </li>
-          ))}
-        </ol>
-
-        {/* Final CTA */}
-        <div className="mt-10 overflow-hidden rounded-3xl bg-[#202124] p-8 text-white sm:p-10">
-          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="text-xl font-medium tracking-tight sm:text-2xl">
-                Got something good? Bring it back.
-              </h3>
-              <p className="mt-1.5 text-sm text-white/70">
-                Upload to <span className="font-medium text-white">voyle</span>{" "}
-                and it&apos;ll show up in your library next to everything else.
-              </p>
+          {/* Workflow list */}
+          <section id="workflow">
+            <div className="flex items-center gap-3 mb-4 px-1">
+              <span className="h-px flex-1 bg-[var(--border)]" />
+              <span className="ios-caption uppercase tracking-[0.2em] font-semibold text-[var(--fg-faint)]">
+                The workflow
+              </span>
+              <span className="h-px flex-1 bg-[var(--border)]" />
             </div>
-            <Link
-              href="/"
-              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-medium text-[#202124] hover:bg-white/90 transition"
-            >
-              Open my library
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
-            </Link>
-          </div>
+
+            <ol className="ios-card overflow-hidden divide-y divide-[var(--border)]">
+              {steps.map((step) => (
+                <li key={step.num} className="flex gap-4 p-5">
+                  <span
+                    className={`shrink-0 w-10 h-10 rounded-[12px] bg-gradient-to-br ${step.accent} flex items-center justify-center text-white text-[14px] font-bold shadow-sm`}
+                  >
+                    {step.num}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="ios-headline mb-1">{step.title}</h3>
+                    <p className="ios-subhead leading-relaxed">{step.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
         </div>
-      </section>
+      </main>
     </div>
   );
 }

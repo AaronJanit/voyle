@@ -37,6 +37,33 @@ async function triggerLockdown(
   }
 }
 
+/**
+ * Log a blocked login attempt to the login_attempts table for auditing.
+ * Records who tried, why they were blocked, and from what IP.
+ */
+async function logAttempt(
+  supabaseUrl: string,
+  supabaseKey: string,
+  email: string,
+  reason: string,
+  ip: string | null
+): Promise<void> {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    await supabase.from("login_attempts").insert({
+      email,
+      reason,
+      ip_address: ip,
+      attempted_at: new Date().toISOString(),
+    });
+  } catch {
+    // Swallow — the attempt is still rejected below.
+  }
+}
+
+// Domain that instantly unplugs the site if used in a login attempt.
+const BLOCKED_DOMAIN = "@mesivta.co.uk";
+
 export async function POST(request: NextRequest) {
   let body: { email?: string; code?: string };
   try {
@@ -61,6 +88,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
   }
 
+  const clientIP = getRequestIP(request);
+
+  // --- Step 0: blocked-domain check (BEFORE everything else) ------------
+  // Any login attempt with an email ending in @mesivta.co.uk instantly
+  // unplugs the site and logs the attempt to Supabase.
+  if (email.endsWith(BLOCKED_DOMAIN)) {
+    await triggerLockdown(supabaseUrl, supabaseKey, email);
+    await logAttempt(supabaseUrl, supabaseKey, email, "blocked_domain", clientIP);
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   // --- Step 1: email allowlist check (BEFORE passcode) -------------------
   // If the email isn't in the users table, trip the global lockdown and
   // reject. This fires regardless of passcode correctness.
@@ -76,6 +114,7 @@ export async function POST(request: NextRequest) {
 
   if (error || !data) {
     await triggerLockdown(supabaseUrl, supabaseKey, email);
+    await logAttempt(supabaseUrl, supabaseKey, email, "not_allowlisted", clientIP);
     // Deliberately generic message — don't reveal the lockdown was tripped.
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
@@ -90,7 +129,7 @@ export async function POST(request: NextRequest) {
   }
 
   // --- Step 3: IP pinning -----------------------------------------------
-  const clientIP = getRequestIP(request);
+  // clientIP was extracted above (before the blocked-domain check).
 
   if (!clientIP) {
     // Strict mode: if we can't determine the IP, refuse to authenticate.

@@ -3,7 +3,21 @@
 import { MediaItem } from "@/lib/media";
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { Upload } from "lucide-react";
+import {
+  Upload,
+  ArrowRight,
+  Sparkles,
+  ImagePlus,
+  Wand2,
+  Video,
+  Send,
+  MousePointerClick,
+  Search,
+  MessageSquare,
+  ShieldCheck,
+  Film,
+  CircleUser,
+} from "lucide-react";
 import { ChannelInfo, FileAttribution } from "@/lib/channel";
 
 interface ChannelViewProps {
@@ -418,38 +432,94 @@ function AboutTab({
     return <GettingStartedTab />;
   }
 
+  return <RegularAbout isOwnChannel={isOwnChannel} />;
+}
+
+/* ----------------------------------------------------------------------------
+ * Regular channel About view — shown on any populated channel.
+ * A two-column layout: left = channel stats card + description, right =
+ * a vertical "How to create content" timeline with Lucide icons.
+ * ------------------------------------------------------------------------- */
+function RegularAbout({ isOwnChannel }: { isOwnChannel: boolean }) {
   return (
-    <div className="px-4 sm:px-6 pt-6">
-      <div className="max-w-3xl">
-        <p className="text-sm text-[color:var(--yt-text)] leading-relaxed">
-          {isOwnChannel
-            ? "This is your channel. Anything you upload here will be attributed to you and appear on the home grid for everyone to see."
-            : "This channel publishes content to the site. Check the Videos tab to see what's been uploaded."}
-        </p>
+    <div className="px-4 sm:px-6 pt-8 pb-6">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6 lg:gap-8">
+        {/* Left column — channel info card */}
+        <aside className="space-y-4">
+          <div className="p-6 rounded-2xl bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)]">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[color:var(--yt-text-secondary)]">
+              <CircleUser className="w-4 h-4" />
+              About this channel
+            </div>
+            <p className="mt-4 text-sm text-[color:var(--yt-text)] leading-relaxed">
+              {isOwnChannel
+                ? "This is your channel. Anything you upload here will be attributed to you and appear on the home grid for everyone to see."
+                : "This channel publishes content to the site. Check the Videos tab to see what's been uploaded."}
+            </p>
+          </div>
 
-        {isOwnChannel && <HowToCreate />}
+          {isOwnChannel && (
+            <div className="p-6 rounded-2xl bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)]">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[color:var(--yt-text-secondary)]">
+                <Sparkles className="w-4 h-4" />
+                Quick actions
+              </div>
+              <div className="mt-4 flex flex-col gap-2">
+                <Link
+                  href="/generate"
+                  className="inline-flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-[color:var(--yt-chip)] hover:bg-[color:var(--yt-hover)] transition-colors group"
+                >
+                  <span className="flex items-center gap-3 text-sm font-medium text-[color:var(--yt-text)]">
+                    <Wand2 className="w-4 h-4 text-[color:var(--yt-blue)]" />
+                    Create with AI
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-[color:var(--yt-text-secondary)] group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+            </div>
+          )}
+        </aside>
 
-        {isOwnChannel && (
-          <Link
-            href="/generate"
-            className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-[color:var(--yt-blue)] hover:underline"
-          >
-            Or create something with AI
-            <svg
-              viewBox="0 0 24 24"
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 12h14M13 5l7 7-7 7"
-              />
-            </svg>
-          </Link>
-        )}
+        {/* Right column — workflow */}
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-[color:var(--yt-text)]">
+              How to create content
+            </h2>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[color:var(--yt-chip)] text-[10px] font-medium uppercase tracking-wider text-[color:var(--yt-text-secondary)]">
+              <ShieldCheck className="w-3 h-3" />
+              4 steps
+            </span>
+          </div>
+
+          <ol className="relative space-y-3">
+            <span
+              aria-hidden
+              className="absolute left-[19px] top-4 bottom-4 w-px bg-[color:var(--yt-border)]"
+            />
+            {ABOUT_STEPS.map((step) => {
+              const Icon = step.icon;
+              return (
+                <li
+                  key={step.num}
+                  className="relative flex gap-4 p-5 rounded-2xl bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)] hover:shadow-sm transition-shadow"
+                >
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[color:var(--yt-text)] text-[color:var(--yt-bg)] flex items-center justify-center relative z-10">
+                    <Icon className="w-5 h-5" strokeWidth={2.25} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm sm:text-base font-semibold text-[color:var(--yt-text)]">
+                      {step.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-[color:var(--yt-text-secondary)] leading-relaxed">
+                      {step.body}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
       </div>
     </div>
   );
@@ -457,87 +527,163 @@ function AboutTab({
 
 /* ----------------------------------------------------------------------------
  * Getting-started landing — shown on the user's own channel before their
- * first upload. Big YouTube-style hero + the workflow cards at a larger
- * scale + a clear CTA. Designed to fill the page the way a real YouTube
- * "Welcome to your channel" prompt would.
+ * first upload. Large YouTube-style hero + horizontal step strip + clear
+ * CTA cards. Designed to fill the page the way a real YouTube "Welcome to
+ * your channel" prompt would.
  * ------------------------------------------------------------------------- */
 function GettingStartedTab() {
   return (
-    <div className="px-4 sm:px-6 pt-8 pb-4">
-      {/* Hero */}
-      <div className="max-w-3xl mx-auto text-center py-10 sm:py-14">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color:var(--yt-chip)] text-xs font-medium text-[color:var(--yt-text-secondary)] mb-5">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--yt-brand)] opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--yt-brand)]" />
-          </span>
-          Your channel is ready
-        </div>
+    <div className="px-4 sm:px-6 pt-6 pb-12">
+      {/* ── Hero ── */}
+      <div className="relative max-w-5xl mx-auto overflow-hidden rounded-3xl bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)]">
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.08] pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
+            backgroundSize: "24px 24px",
+            color: "var(--yt-text)",
+          }}
+        />
+        <div className="relative px-6 sm:px-10 py-12 sm:py-16 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[color:var(--yt-chip)] text-xs font-medium text-[color:var(--yt-text-secondary)] mb-6">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--yt-brand)] opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--yt-brand)]" />
+            </span>
+            Your channel is ready
+          </div>
 
-        <h2 className="text-3xl sm:text-4xl font-bold text-[color:var(--yt-text)] tracking-tight">
-          Get started in 4 steps
-        </h2>
-        <p className="mt-3 text-base text-[color:var(--yt-text-secondary)] max-w-xl mx-auto leading-relaxed">
-          Create your first AI video, photo, or GIF and upload it here.
-          Everything you publish will be attributed to you and appear on the
-          home grid.
-        </p>
+          <h2 className="text-3xl sm:text-5xl font-bold text-[color:var(--yt-text)] tracking-tight">
+            Make your{" "}
+            <span className="bg-gradient-to-r from-[color:var(--yt-blue)] to-[color:var(--yt-brand)] bg-clip-text text-transparent">
+              first
+            </span>{" "}
+            upload
+          </h2>
+          <p className="mt-4 text-base sm:text-lg text-[color:var(--yt-text-secondary)] max-w-2xl mx-auto leading-relaxed">
+            Create an AI video, photo, or GIF and bring it back here. Everything
+            you publish will be attributed to you and appear on the home grid.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[color:var(--yt-brand)] text-white rounded-full text-sm font-semibold hover:bg-[color:var(--yt-brand-hover)] shadow-sm transition-all hover:shadow"
+            >
+              <Upload className="w-4 h-4" strokeWidth={2.5} />
+              Upload your first file
+            </button>
+            <Link
+              href="/generate"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[color:var(--yt-chip)] text-[color:var(--yt-text)] rounded-full text-sm font-semibold hover:bg-[color:var(--yt-hover)] transition-colors"
+            >
+              <Sparkles className="w-4 h-4" />
+              Or generate with AI
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {/* Steps — large cards */}
-      <ol className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-        {GETTING_STARTED_STEPS.map((step, i) => (
-          <li
-            key={step.num}
-            className="relative flex gap-4 p-5 sm:p-6 rounded-2xl bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)]"
-          >
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[color:var(--yt-chip)] flex items-center justify-center text-sm font-semibold text-[color:var(--yt-text)]">
-              {step.num}
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-base font-semibold text-[color:var(--yt-text)]">
-                {step.title}
-              </h3>
-              <p className="mt-1 text-sm text-[color:var(--yt-text-secondary)] leading-relaxed">
-                {step.body}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ol>
+      {/* ── 4-step strip ── */}
+      <div className="max-w-5xl mx-auto mt-8">
+        <div className="flex items-center gap-3 mb-5">
+          <h3 className="text-lg sm:text-xl font-bold text-[color:var(--yt-text)]">
+            How to create content
+          </h3>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[color:var(--yt-chip)] text-[10px] font-medium uppercase tracking-wider text-[color:var(--yt-text-secondary)]">
+            <ShieldCheck className="w-3 h-3" />
+            4 steps
+          </span>
+        </div>
 
-      {/* Bottom CTA row */}
-      <div className="max-w-3xl mx-auto mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={() => {
-            // Scroll up so the Upload button in the channel header is in view
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[color:var(--yt-brand)] text-white rounded-full text-sm font-medium hover:bg-[color:var(--yt-brand-hover)] transition-colors"
-        >
-          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
-            <path d="M14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2zm7-6H3v12h18V7zm0-2c1.1 0 2 .9 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h18z" />
-          </svg>
-          Upload your first file
-        </button>
+        <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {GETTING_STARTED_STEPS.map((step) => {
+            const Icon = step.icon;
+            return (
+              <li
+                key={step.num}
+                className="group relative flex flex-col p-5 rounded-2xl bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)] hover:border-[color:var(--yt-text)] transition-colors"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[color:var(--yt-text)] text-[color:var(--yt-bg)] flex items-center justify-center">
+                    <Icon className="w-5 h-5" strokeWidth={2.25} />
+                  </div>
+                  <span className="text-xs font-mono font-medium text-[color:var(--yt-text-secondary)]">
+                    {step.num}
+                  </span>
+                </div>
+                <h4 className="text-base font-semibold text-[color:var(--yt-text)]">
+                  {step.title}
+                </h4>
+                <p className="mt-2 text-sm text-[color:var(--yt-text-secondary)] leading-relaxed">
+                  {step.body}
+                </p>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+
+      {/* ── Two CTA cards ── */}
+      <div className="max-w-5xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link
           href="/generate"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[color:var(--yt-surface)] text-[color:var(--yt-text)] border border-[color:var(--yt-border)] rounded-full text-sm font-medium hover:bg-[color:var(--yt-hover)] transition-colors"
+          className="group flex items-center gap-4 p-5 rounded-2xl bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)] hover:border-[color:var(--yt-blue)] transition-colors"
         >
-          Or generate one with AI
+          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[color:var(--yt-blue)]/10 text-[color:var(--yt-blue)] flex items-center justify-center">
+            <Sparkles className="w-6 h-6" strokeWidth={2.25} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h4 className="text-sm font-semibold text-[color:var(--yt-text)]">
+              Generate with AI
+            </h4>
+            <p className="mt-0.5 text-xs text-[color:var(--yt-text-secondary)]">
+              Type a prompt, get a picture. Skip the download dance entirely.
+            </p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-[color:var(--yt-text-secondary)] group-hover:translate-x-0.5 transition-transform" />
+        </Link>
+
+        <Link
+          href="/chat"
+          className="group flex items-center gap-4 p-5 rounded-2xl bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)] hover:border-[color:var(--yt-blue)] transition-colors"
+        >
+          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[color:var(--yt-blue)]/10 text-[color:var(--yt-blue)] flex items-center justify-center">
+            <MessageSquare className="w-6 h-6" strokeWidth={2.25} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h4 className="text-sm font-semibold text-[color:var(--yt-text)]">
+              Ask Voyle for ideas
+            </h4>
+            <p className="mt-0.5 text-xs text-[color:var(--yt-text-secondary)]">
+              Not sure what to make? Chat with the in-house AI for inspiration.
+            </p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-[color:var(--yt-text-secondary)] group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
     </div>
   );
 }
 
-/* The 4 steps shown in the getting-started landing. Larger / more
- * detailed than the compact About view. */
-const GETTING_STARTED_STEPS: { num: string; title: string; body: React.ReactNode }[] = [
+/* The 4 large steps shown in the getting-started landing. Each has its
+ * own Lucide icon that matches the action — ImagePlus for grabbing,
+ * Wand2 for editing, Video for animating, Send for uploading. */
+const GETTING_STARTED_STEPS: {
+  num: string;
+  title: string;
+  body: React.ReactNode;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+}[] = [
   {
     num: "01",
-    title: "Find a photo or write a prompt",
+    icon: ImagePlus,
+    title: "Find a photo or prompt",
     body: (
       <>
         Grab a teacher photo from{" "}
@@ -555,6 +701,7 @@ const GETTING_STARTED_STEPS: { num: string; title: string; body: React.ReactNode
   },
   {
     num: "02",
+    icon: Wand2,
     title: "Edit it with AI",
     body: (
       <>
@@ -579,6 +726,7 @@ const GETTING_STARTED_STEPS: { num: string; title: string; body: React.ReactNode
   },
   {
     num: "03",
+    icon: Video,
     title: "Make it move (optional)",
     body: (
       <>
@@ -591,8 +739,7 @@ const GETTING_STARTED_STEPS: { num: string; title: string; body: React.ReactNode
         >
           chat.qwen.ai
         </a>
-        , paste your picture, open the <span className="font-medium">+</span>{" "}
-        menu, choose{" "}
+        , paste your picture, choose{" "}
         <span className="font-medium text-[color:var(--yt-text)]">video</span>,
         and describe what you want it to do.
       </>
@@ -600,116 +747,97 @@ const GETTING_STARTED_STEPS: { num: string; title: string; body: React.ReactNode
   },
   {
     num: "04",
-    title: "Upload it to your channel",
+    icon: Send,
+    title: "Upload to your channel",
     body: (
       <>
         Click the <span className="font-medium">Upload</span> button at the top
         of this page, pick your finished clip or picture, and it&apos;ll show
-        up on your channel — and the home grid — instantly.
+        up on your channel instantly.
       </>
     ),
   },
 ];
 
-/* Compact "how to create content" workflow — shown in the About tab
- * once the channel already has content. */
-function HowToCreate() {
-  const steps: { num: string; title: string; body: React.ReactNode }[] = [
-    {
-      num: "01",
-      title: "Find a photo or prompt",
-      body: (
-        <>
-          Grab a teacher photo from{" "}
-          <a
-            href="https://mesivta.co.uk"
-            target="_blank"
-            rel="noreferrer"
-            className="text-[color:var(--yt-blue)] hover:underline"
-          >
-            mesivta.co.uk
-          </a>
-          , or write your own prompt.
-        </>
-      ),
-    },
-    {
-      num: "02",
-      title: "Edit it with AI",
-      body: (
-        <>
-          Paste it into{" "}
-          <span className="font-medium text-[color:var(--yt-text)]">ChatGPT</span>
-          ,{" "}
-          <span className="font-medium text-[color:var(--yt-text)]">
-            Microsoft Copilot
-          </span>
-          , or{" "}
-          <span className="font-medium text-[color:var(--yt-text)]">Gemini</span>{" "}
-          and describe what you want.
-        </>
-      ),
-    },
-    {
-      num: "03",
-      title: "Make it move (optional)",
-      body: (
-        <>
-          On{" "}
-          <a
-            href="https://chat.qwen.ai"
-            target="_blank"
-            rel="noreferrer"
-            className="text-[color:var(--yt-blue)] hover:underline"
-          >
-            chat.qwen.ai
-          </a>
-          , open the <span className="font-medium">+</span> menu, choose{" "}
-          <span className="font-medium text-[color:var(--yt-text)]">video</span>,
-          and describe what it should do.
-        </>
-      ),
-    },
-    {
-      num: "04",
-      title: "Upload it here",
-      body: (
-        <>
-          Click the Upload button at the top of this page and your finished
-          clip or picture will appear on your channel instantly.
-        </>
-      ),
-    },
-  ];
-
-  return (
-    <div className="mt-8">
-      <h2 className="text-lg font-semibold text-[color:var(--yt-text)] mb-4">
-        How to create content
-      </h2>
-      <ol className="space-y-3">
-        {steps.map((step) => (
-          <li
-            key={step.num}
-            className="flex gap-3 p-4 rounded-xl bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)]"
-          >
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[color:var(--yt-chip)] flex items-center justify-center text-sm font-medium text-[color:var(--yt-text)]">
-              {step.num}
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium text-[color:var(--yt-text)]">
-                {step.title}
-              </h3>
-              <p className="mt-0.5 text-sm text-[color:var(--yt-text-secondary)] leading-relaxed">
-                {step.body}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
+/* The 4 compact steps shown in the regular About tab. Same content,
+ * different icon emphasis. */
+const ABOUT_STEPS: {
+  num: string;
+  title: string;
+  body: React.ReactNode;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+}[] = [
+  {
+    num: "01",
+    icon: Search,
+    title: "Find a photo or prompt",
+    body: (
+      <>
+        Grab a teacher photo from{" "}
+        <a
+          href="https://mesivta.co.uk"
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium text-[color:var(--yt-blue)] hover:underline"
+        >
+          mesivta.co.uk
+        </a>
+        , or write your own prompt.
+      </>
+    ),
+  },
+  {
+    num: "02",
+    icon: Sparkles,
+    title: "Edit it with AI",
+    body: (
+      <>
+        Paste it into{" "}
+        <span className="font-medium text-[color:var(--yt-text)]">ChatGPT</span>
+        ,{" "}
+        <span className="font-medium text-[color:var(--yt-text)]">
+          Microsoft Copilot
+        </span>
+        , or{" "}
+        <span className="font-medium text-[color:var(--yt-text)]">Gemini</span>{" "}
+        and describe what you want.
+      </>
+    ),
+  },
+  {
+    num: "03",
+    icon: Film,
+    title: "Make it move (optional)",
+    body: (
+      <>
+        On{" "}
+        <a
+          href="https://chat.qwen.ai"
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium text-[color:var(--yt-blue)] hover:underline"
+        >
+          chat.qwen.ai
+        </a>
+        , choose{" "}
+        <span className="font-medium text-[color:var(--yt-text)]">video</span>{" "}
+        and describe what it should do.
+      </>
+    ),
+  },
+  {
+    num: "04",
+    icon: MousePointerClick,
+    title: "Upload it here",
+    body: (
+      <>
+        Click the <span className="font-medium">Upload</span> button at the top
+        of this page and your finished clip or picture will appear on your
+        channel instantly.
+      </>
+    ),
+  },
+];
 
 /* ----------------------------------------------------------------------------
  * A single video card in the channel grid — same style as YouTubeGrid.

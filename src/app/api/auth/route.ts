@@ -15,15 +15,25 @@ import { COOKIE_NAME, createAuthToken } from "@/lib/auth";
 import { getRequestIP } from "@/lib/ip";
 import { createClient } from "@supabase/supabase-js";
 
+/**
+ * Get the Supabase key to use for writes. The publishable key (SUPABASE_KEY)
+ * is blocked by RLS from writing to site_lockdown / login_attempts, so we
+ * prefer the service-role key (SUPABASE_SERVICE_ROLE_KEY) which bypasses RLS.
+ */
+function getWriteKey(): string | null {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || null;
+}
+
 /** Flip the global lockdown flag on. Called when a bad email is attempted. */
 async function triggerLockdown(
   supabaseUrl: string,
-  supabaseKey: string,
   email: string
 ): Promise<void> {
+  const key = getWriteKey();
+  if (!key) return;
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    await supabase
+    const supabase = createClient(supabaseUrl, key);
+    const { error } = await supabase
       .from("site_lockdown")
       .update({
         locked: true,
@@ -32,8 +42,9 @@ async function triggerLockdown(
         updated_at: new Date().toISOString(),
       })
       .eq("id", 1);
-  } catch {
-    // Swallow — the bad-email attempt is still rejected below.
+    if (error) console.error("[auth] triggerLockdown error:", error.message);
+  } catch (err) {
+    console.error("[auth] triggerLockdown exception:", err);
   }
 }
 
@@ -43,21 +54,23 @@ async function triggerLockdown(
  */
 async function logAttempt(
   supabaseUrl: string,
-  supabaseKey: string,
   email: string,
   reason: string,
   ip: string | null
 ): Promise<void> {
+  const key = getWriteKey();
+  if (!key) return;
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    await supabase.from("login_attempts").insert({
+    const supabase = createClient(supabaseUrl, key);
+    const { error } = await supabase.from("login_attempts").insert({
       email,
       reason,
       ip_address: ip,
       attempted_at: new Date().toISOString(),
     });
-  } catch {
-    // Swallow — the attempt is still rejected below.
+    if (error) console.error("[auth] logAttempt error:", error.message);
+  } catch (err) {
+    console.error("[auth] logAttempt exception:", err);
   }
 }
 
@@ -94,8 +107,8 @@ export async function POST(request: NextRequest) {
   // Any login attempt with an email ending in @mesivta.co.uk instantly
   // unplugs the site and logs the attempt to Supabase.
   if (email.endsWith(BLOCKED_DOMAIN)) {
-    await triggerLockdown(supabaseUrl, supabaseKey, email);
-    await logAttempt(supabaseUrl, supabaseKey, email, "blocked_domain", clientIP);
+    await triggerLockdown(supabaseUrl, email);
+    await logAttempt(supabaseUrl, email, "blocked_domain", clientIP);
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -113,8 +126,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error || !data) {
-    await triggerLockdown(supabaseUrl, supabaseKey, email);
-    await logAttempt(supabaseUrl, supabaseKey, email, "not_allowlisted", clientIP);
+    await triggerLockdown(supabaseUrl, email);
+    await logAttempt(supabaseUrl, email, "not_allowlisted", clientIP);
     // Deliberately generic message — don't reveal the lockdown was tripped.
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }

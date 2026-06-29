@@ -25,7 +25,7 @@ const PUBLIC_PATHS = ["/login"];
 // Edge function isolates persist module-level state across requests within
 // the same isolate, so we cache the lockdown flag for a short TTL to avoid
 // a Supabase round-trip on every single request.
-const LOCKDOWN_CACHE_TTL_MS = 10_000; // 10 seconds
+const LOCKDOWN_CACHE_TTL_MS = 3_000; // 3 seconds — lockdown must activate fast
 type LockdownCache = { value: boolean; expiresAt: number };
 const g = globalThis as unknown as {
   __lockdownCache?: LockdownCache;
@@ -44,7 +44,9 @@ async function isLockedDown(): Promise<boolean> {
   }
 
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_KEY;
+  // Prefer the service-role key for reads too — more reliable, bypasses RLS.
+  const supabaseKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
   if (!supabaseUrl || !supabaseKey) {
     return false; // not configured — fail open
   }

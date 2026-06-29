@@ -20,15 +20,18 @@ import type { CompactStats } from "@/lib/channel-stats";
  * selector (Most popular / Most videos / Most recent). These are
  * purely client-side and re-compute on change — the server payload
  * is small (one row per channel + 4 media items each).
+ *
+ * When the visitor is logged in but doesn't yet have a channel of
+ * their own, an "Upload to your channel!" CTA card is rendered as the
+ * first item in the grid. The card follows the same visual shell as
+ * the other cards so the directory feels like a single, cohesive list.
  */
 export default function ChannelsBrowse({
   channels,
-  ownChannelMissing = false,
-  currentUserName,
+  currentUser,
 }: {
   channels: ChannelCardData[];
-  ownChannelMissing?: boolean;
-  currentUserName?: string | null;
+  currentUser: CurrentUserContext | null;
 }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("popular");
@@ -90,60 +93,57 @@ export default function ChannelsBrowse({
 
       {/* Empty state */}
       {channels.length === 0 ? (
-        ownChannelMissing ? (
-          // Logged-in visitor with no uploads yet — show just the CTA
-          // card so they have a clear next step instead of a sad empty
-          // page.
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            <UploadToYourChannelCard userName={currentUserName ?? null} />
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center py-24 px-4">
-            <div className="w-16 h-16 rounded-full bg-[color:var(--yt-chip)] flex items-center justify-center mb-4">
-              <svg
-                viewBox="0 0 24 24"
-                className="w-8 h-8 text-[color:var(--yt-text-secondary)]"
-                fill="currentColor"
-              >
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-              </svg>
-            </div>
-            <p className="text-base font-medium text-[color:var(--yt-text)]">
-              No channels yet
-            </p>
-            <p className="mt-1 text-sm text-[color:var(--yt-text-secondary)] max-w-sm">
-              Upload your first file from your channel page and it will appear
-              here.
-            </p>
-            <Link
-              href="/channel"
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-[color:var(--yt-text)] text-[color:var(--yt-bg)] rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+        <div className="flex flex-col items-center justify-center text-center py-24 px-4">
+          <div className="w-16 h-16 rounded-full bg-[color:var(--yt-chip)] flex items-center justify-center mb-4">
+            <svg
+              viewBox="0 0 24 24"
+              className="w-8 h-8 text-[color:var(--yt-text-secondary)]"
+              fill="currentColor"
             >
-              Go to my channel
-            </Link>
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+            </svg>
           </div>
-        )
-      ) : visible.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center py-16">
-          <p className="text-sm text-[color:var(--yt-text-secondary)]">
-            No channels match &ldquo;{query}&rdquo;.
+          <p className="text-base font-medium text-[color:var(--yt-text)]">
+            No channels yet
           </p>
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            className="mt-2 text-sm font-medium text-[color:var(--yt-blue)] hover:underline"
+          <p className="mt-1 text-sm text-[color:var(--yt-text-secondary)] max-w-sm">
+            Upload your first file from your channel page and it will appear
+            here.
+          </p>
+          <Link
+            href="/channel"
+            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-[color:var(--yt-text)] text-[color:var(--yt-bg)] rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
           >
-            Clear search
-          </button>
+            Go to my channel
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {ownChannelMissing && (
-            <UploadToYourChannelCard userName={currentUserName ?? null} />
+          {/* The "Upload to your channel!" card is always rendered first
+              (when applicable) and is intentionally not affected by
+              search/sort filters — it's a system affordance, not a
+              directory entry. */}
+          {currentUser?.showUploadCta && (
+            <UploadToYourChannelCard user={currentUser} />
           )}
-          {visible.map((c) => (
-            <ChannelDirectoryCard key={c.channel.name} data={c} />
-          ))}
+          {visible.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center text-center py-16">
+              <p className="text-sm text-[color:var(--yt-text-secondary)]">
+                No channels match &ldquo;{query}&rdquo;.
+              </p>
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="mt-2 text-sm font-medium text-[color:var(--yt-blue)] hover:underline"
+              >
+                Clear search
+              </button>
+            </div>
+          ) : (
+            visible.map((c) => (
+              <ChannelDirectoryCard key={c.channel.name} data={c} />
+            ))
+          )}
         </div>
       )}
     </div>
@@ -235,81 +235,6 @@ function ChannelDirectoryCard({ data }: { data: ChannelCardData }) {
             No previews yet
           </div>
         )}
-      </div>
-    </Link>
-  );
-}
-
-/* ----------------------------------------------------------------------------
- * UploadToYourChannelCard — shown at the front of the directory when the
- * visitor is logged in but has not uploaded anything yet. Visually
- * distinct from the regular cards (brand-accented, no thumbnail grid)
- * so the eye lands on it first.
- * ------------------------------------------------------------------------- */
-function UploadToYourChannelCard({
-  userName,
-}: {
-  userName: string | null;
-}) {
-  return (
-    <Link
-      href="/channel"
-      className="group relative flex flex-col rounded-2xl overflow-hidden bg-[color:var(--yt-brand)] hover:bg-[color:var(--yt-brand-hover)] transition-colors text-white shadow-sm hover:shadow-md"
-    >
-      {/* Decorative top strip — diagonal gradient for visual interest */}
-      <div
-        className="h-20 relative overflow-hidden"
-        aria-hidden
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-transparent" />
-        <svg
-          viewBox="0 0 24 24"
-          className="absolute right-4 top-4 w-6 h-6 text-white/70"
-          fill="currentColor"
-        >
-          <path d="M14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2zm7-6H3v12h18V7zm0-2c1.1 0 2 .9 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h18z" />
-        </svg>
-      </div>
-
-      {/* Body */}
-      <div className="px-5 -mt-9 flex-1 flex flex-col">
-        <div className="w-16 h-16 rounded-full flex items-center justify-center bg-white text-[color:var(--yt-brand)] text-2xl font-bold ring-4 ring-[color:var(--yt-brand)] shadow-sm">
-          <svg
-            viewBox="0 0 24 24"
-            className="w-7 h-7"
-            fill="currentColor"
-          >
-            <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" />
-          </svg>
-        </div>
-
-        <h3 className="mt-3 text-base font-semibold leading-snug">
-          Upload to your channel!
-        </h3>
-        <p className="mt-1 text-sm text-white/90">
-          {userName
-            ? `Your channel "${userName}" is empty. Upload your first file and it will appear here.`
-            : "Your channel is empty. Upload your first file and it will appear here."}
-        </p>
-
-        <div className="mt-auto pt-4">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-[color:var(--yt-brand)] text-sm font-semibold group-hover:opacity-90 transition-opacity">
-            Go to my channel
-            <svg
-              viewBox="0 0 24 24"
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 12h14M13 5l7 7-7 7"
-              />
-            </svg>
-          </span>
-        </div>
       </div>
     </Link>
   );
@@ -513,4 +438,162 @@ export interface ChannelCardData {
   stats: CompactStats;
   recent: MediaItem[];
   attribution?: Map<string, FileAttribution>;
+}
+
+/* ----------------------------------------------------------------------------
+ * CurrentUserContext — information about the visitor that's relevant to the
+ * directory. `null` when the visitor isn't logged in. `showUploadCta` is the
+ * signal to render the "Upload to your channel!" card (logged in + has no
+ * channel of their own yet).
+ * ------------------------------------------------------------------------- */
+export interface CurrentUserContext {
+  name: string;
+  channel: ChannelInfo;
+  showUploadCta: boolean;
+}
+
+/* ----------------------------------------------------------------------------
+ * UploadToYourChannelCard — YouTube-style CTA card shown to logged-in
+ * visitors who don't yet have a channel. Visually mirrors the regular
+ * channel card shell (gradient banner, avatar, name, stats) so it feels
+ * native to the directory, but its "stats" are a 3-step quick-start path
+ * and the bottom CTA invites the visitor to upload their first file.
+ *
+ * The card is intentionally NOT a `<Link>` wrapping the whole tile
+ * because clicking anywhere would feel ambiguous — instead each call-
+ * to-action is a discrete link. The whole tile stays focusable via
+ * keyboard tab order.
+ * ------------------------------------------------------------------------- */
+function UploadToYourChannelCard({
+  user,
+}: {
+  user: CurrentUserContext;
+}) {
+  return (
+    <article
+      className="group relative flex flex-col rounded-2xl bg-[color:var(--yt-surface)] border border-dashed border-[color:var(--yt-blue)]/40 overflow-hidden hover:shadow-md hover:border-[color:var(--yt-blue)] transition-all"
+      aria-label="Create your channel"
+    >
+      {/* Animated gradient banner — eye-catching without being noisy */}
+      <div
+        className="relative h-20 overflow-hidden"
+        style={{
+          background: `linear-gradient(135deg, ${user.channel.color} 0%, ${user.channel.color}55 60%, #065fd4 100%)`,
+        }}
+        aria-hidden
+      >
+        {/* Subtle dotted overlay (YouTube uses this on placeholder cards) */}
+        <div
+          className="absolute inset-0 opacity-25"
+          style={{
+            backgroundImage:
+              "radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px)",
+            backgroundSize: "10px 10px",
+          }}
+        />
+        {/* "New" pill in the top-right corner */}
+        <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-sm text-[10px] font-semibold uppercase tracking-wider text-white">
+          <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--yt-brand)] animate-pulse" />
+          Yours
+        </span>
+      </div>
+
+      {/* Avatar + identity */}
+      <div className="px-5 -mt-9">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-semibold ring-4 ring-[color:var(--yt-surface)]"
+          style={{ backgroundColor: user.channel.color }}
+          aria-hidden
+        >
+          {user.channel.initial}
+        </div>
+
+        <div className="mt-3">
+          <h3 className="text-base font-semibold text-[color:var(--yt-text)] leading-snug">
+            Upload to your channel!
+          </h3>
+          <p className="text-xs text-[color:var(--yt-text-secondary)] mt-0.5">
+            @{slugify(user.name)}
+          </p>
+        </div>
+      </div>
+
+      {/* 3-step quick-start path (replaces the stats row) */}
+      <div className="px-5 mt-4 space-y-2">
+        <QuickStep n={1} label="Create something" />
+        <QuickStep n={2} label="Upload your first file" />
+        <QuickStep n={3} label="Share with everyone" />
+      </div>
+
+      {/* Copy */}
+      <p className="px-5 mt-4 text-xs text-[color:var(--yt-text-secondary)] leading-relaxed">
+        Your channel is ready and waiting. Upload a photo, GIF, or video and
+        it will appear here for everyone to discover.
+      </p>
+
+      {/* Spacer pushes the CTA to the bottom so all cards line up */}
+      <div className="flex-1" />
+
+      {/* CTA stack */}
+      <div className="px-5 pb-5 mt-5 flex flex-col gap-2">
+        <Link
+          href="/channel"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[color:var(--yt-blue)] hover:bg-[color:var(--yt-blue)]/90 text-white rounded-full text-sm font-semibold transition-colors shadow-sm"
+        >
+          <UploadPlusIcon className="w-4 h-4" />
+          Upload your first file
+        </Link>
+        <Link
+          href="/generate"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[color:var(--yt-chip)] hover:bg-[color:var(--yt-hover)] text-[color:var(--yt-text)] rounded-full text-sm font-medium transition-colors"
+        >
+          <SparklesIcon className="w-4 h-4" />
+          Or generate with AI
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * QuickStep — a single "1 · Create" line used inside the CTA card.
+ * ------------------------------------------------------------------------- */
+function QuickStep({ n, label }: { n: number; label: string }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[color:var(--yt-chip)] text-[11px] font-semibold text-[color:var(--yt-text-secondary)] flex items-center justify-center tabular-nums">
+        {n}
+      </span>
+      <span className="text-xs text-[color:var(--yt-text)]">{label}</span>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Inline icons — kept local so the card stays self-contained.
+ * ------------------------------------------------------------------------- */
+function UploadPlusIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2zm7-6H3v12h18V7zm0-2c1.1 0 2 .9 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h18z" />
+    </svg>
+  );
+}
+
+function SparklesIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 3l1.9 4.7L18.6 9.6l-4.7 1.9L12 16.2l-1.9-4.7L5.4 9.6l4.7-1.9L12 3z" />
+      <path d="M19 14l.9 2.3 2.3.9-2.3.9L19 20.4l-.9-2.3-2.3-.9 2.3-.9L19 14z" />
+    </svg>
+  );
 }

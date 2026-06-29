@@ -10,7 +10,9 @@ import {
   getAttributionMap,
 } from "@/lib/channel";
 import { getCurrentUser } from "@/lib/user";
-import ChannelsBrowse, { ChannelCardData } from "@/components/ChannelsBrowse";
+import ChannelsBrowse, {
+  ChannelCardData,
+} from "@/components/ChannelsBrowse";
 import type { CompactStats } from "@/lib/channel-stats";
 
 export const dynamic = "force-dynamic";
@@ -18,28 +20,25 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Channels" };
 
 export default async function ChannelsPage() {
-  const [allStats, currentUser] = await Promise.all([
+  const [allStats, user] = await Promise.all([
     getAllChannelStats(),
     getCurrentUser(),
   ]);
-
-  // If the visitor is logged in but has no attributed files on disk yet,
-  // surface a "Upload to your channel!" CTA card at the front of the grid
-  // so they know exactly where to go.
-  const ownChannelMissing =
-    !!currentUser &&
-    !allStats.some((s) => s.name === currentUser.name);
 
   // Build the per-card payload (channel info + stats + 4 previews).
   // We do this in parallel because each getRecentMediaForChannel call
   // is an independent Supabase read.
   const cards: ChannelCardData[] = await Promise.all(
     allStats.map(async (s): Promise<ChannelCardData> => {
-      const recent = await getRecentMediaForChannel(s.name, 4);
+      const [recent, attribution] = await Promise.all([
+        getRecentMediaForChannel(s.name, 4),
+        getAttributionMap([]), // populated below in bulk
+      ]);
       return {
         channel: channelInfoForName(s.name),
         stats: toCompact(s),
         recent,
+        attribution, // placeholder; replaced in bulk below
       };
     })
   );
@@ -53,11 +52,28 @@ export default async function ChannelsPage() {
     card.attribution = bulkAttribution;
   }
 
+  // Decide whether to show the "Upload to your channel!" CTA card:
+  //   - Visitor must be logged in (otherwise there's no "their" channel
+  //     to upload to — clicking would just bounce them to /login).
+  //   - Visitor must NOT already have a channel of their own (if they
+  //     do, their own card is already in the grid above).
+  const userHasChannel = user
+    ? cards.some((c) => c.channel.name === user.name)
+    : false;
+  const showUploadCta = !!user && !userHasChannel;
+
   return (
     <ChannelsBrowse
       channels={cards}
-      ownChannelMissing={ownChannelMissing}
-      currentUserName={currentUser?.name ?? null}
+      currentUser={
+        user
+          ? {
+              name: user.name,
+              channel: channelInfoForName(user.name),
+              showUploadCta,
+            }
+          : null
+      }
     />
   );
 }

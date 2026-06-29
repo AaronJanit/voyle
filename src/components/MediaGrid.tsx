@@ -2,7 +2,7 @@
 
 import { MediaItem } from "@/lib/media";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ImageIcon, Play, Upload } from "lucide-react";
+import { ImageIcon, Play, Upload, X } from "lucide-react";
 import Lightbox from "./Lightbox";
 
 export default function MediaGrid({ items }: { items: MediaItem[] }) {
@@ -10,6 +10,11 @@ export default function MediaGrid({ items }: { items: MediaItem[] }) {
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Pending files selected by the user, waiting for the title modal.
+  const [pendingFiles, setPendingFiles] = useState<File[] | null>(null);
+  const [title, setTitle] = useState("");
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
   const next = useCallback(
@@ -35,54 +40,79 @@ export default function MediaGrid({ items }: { items: MediaItem[] }) {
     return () => window.removeEventListener("keydown", handler);
   }, [lightboxIndex, closeLightbox, next, prev]);
 
-  const handleUpload = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // When files are selected, open the title modal instead of uploading
+  // immediately.
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (!files || files.length === 0) return;
-
-      setUploading(true);
-      setUploadMsg(null);
-
-      const formData = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        formData.append("files", files[i]);
-      }
-
-      try {
-        const res = await fetch("/api/media", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setUploadMsg(`Upload failed: ${data.error ?? "unknown error"}`);
-        } else {
-          const savedCount = data.saved?.length ?? 0;
-          const errorCount = data.errors?.length ?? 0;
-          if (savedCount > 0 && errorCount === 0) {
-            setUploadMsg(`Uploaded ${savedCount} file${savedCount > 1 ? "s" : ""}`);
-          } else if (savedCount > 0 && errorCount > 0) {
-            setUploadMsg(
-              `Uploaded ${savedCount}, ${errorCount} failed`
-            );
-          } else {
-            setUploadMsg(
-              data.errors?.map((er: { name: string; error: string }) => er.error).join(", ") ??
-                "No files uploaded"
-            );
-          }
-          // Reload to show new media
-          window.location.reload();
-        }
-      } catch (err) {
-        setUploadMsg(`Upload failed: ${err instanceof Error ? err.message : "network error"}`);
-      } finally {
-        setUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
+      const arr = Array.from(files);
+      setPendingFiles(arr);
+      // Pre-fill title with the first file's name (without extension).
+      const first = arr[0];
+      const dot = first.name.lastIndexOf(".");
+      setTitle(dot > 0 ? first.name.slice(0, dot) : first.name);
+      // Focus the title input after the modal renders.
+      setTimeout(() => titleInputRef.current?.focus(), 50);
+      // Reset the input so selecting the same file again still fires.
+      if (fileInputRef.current) fileInputRef.current.value = "";
     },
     []
   );
+
+  const cancelUpload = useCallback(() => {
+    setPendingFiles(null);
+    setTitle("");
+  }, []);
+
+  const confirmUpload = useCallback(async () => {
+    if (!pendingFiles || pendingFiles.length === 0) return;
+
+    setUploading(true);
+    setUploadMsg(null);
+    setPendingFiles(null);
+
+    const formData = new FormData();
+    for (const file of pendingFiles) {
+      formData.append("files", file);
+    }
+    if (title.trim()) {
+      formData.append("title", title.trim());
+    }
+
+    try {
+      const res = await fetch("/api/media", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setUploadMsg(`Upload failed: ${data.error ?? "unknown error"}`);
+      } else {
+        const savedCount = data.saved?.length ?? 0;
+        const errorCount = data.errors?.length ?? 0;
+        if (savedCount > 0 && errorCount === 0) {
+          setUploadMsg(`Uploaded ${savedCount} file${savedCount > 1 ? "s" : ""}`);
+        } else if (savedCount > 0 && errorCount > 0) {
+          setUploadMsg(
+            `Uploaded ${savedCount}, ${errorCount} failed`
+          );
+        } else {
+          setUploadMsg(
+            data.errors?.map((er: { name: string; error: string }) => er.error).join(", ") ??
+              "No files uploaded"
+          );
+        }
+        // Reload to show new media
+        window.location.reload();
+      }
+    } catch (err) {
+      setUploadMsg(`Upload failed: ${err instanceof Error ? err.message : "network error"}`);
+    } finally {
+      setUploading(false);
+      setTitle("");
+    }
+  }, [pendingFiles, title]);
 
   if (items.length === 0) {
     return (
@@ -99,10 +129,21 @@ export default function MediaGrid({ items }: { items: MediaItem[] }) {
         <UploadButton
           uploading={uploading}
           fileInputRef={fileInputRef}
-          onUpload={handleUpload}
+          onFileSelect={handleFileSelect}
         />
         {uploadMsg && (
           <p className="mt-3 text-sm text-[#5f6368]">{uploadMsg}</p>
+        )}
+        {pendingFiles && (
+          <TitleModal
+            files={pendingFiles}
+            title={title}
+            setTitle={setTitle}
+            titleInputRef={titleInputRef}
+            uploading={uploading}
+            onConfirm={confirmUpload}
+            onCancel={cancelUpload}
+          />
         )}
       </div>
     );
@@ -114,7 +155,7 @@ export default function MediaGrid({ items }: { items: MediaItem[] }) {
         <UploadButton
           uploading={uploading}
           fileInputRef={fileInputRef}
-          onUpload={handleUpload}
+          onFileSelect={handleFileSelect}
         />
         {uploadMsg && (
           <p className="text-sm text-[#5f6368]">{uploadMsg}</p>
@@ -170,18 +211,139 @@ export default function MediaGrid({ items }: { items: MediaItem[] }) {
           onPrev={prev}
         />
       )}
+
+      {pendingFiles && (
+        <TitleModal
+          files={pendingFiles}
+          title={title}
+          setTitle={setTitle}
+          titleInputRef={titleInputRef}
+          uploading={uploading}
+          onConfirm={confirmUpload}
+          onCancel={cancelUpload}
+        />
+      )}
     </>
+  );
+}
+
+function TitleModal({
+  files,
+  title,
+  setTitle,
+  titleInputRef,
+  uploading,
+  onConfirm,
+  onCancel,
+}: {
+  files: File[];
+  title: string;
+  setTitle: (s: string) => void;
+  titleInputRef: React.RefObject<HTMLInputElement | null>;
+  uploading: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onConfirm();
+      }
+    },
+    [onConfirm]
+  );
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-[#202124]">
+            {files.length > 1
+              ? `Upload ${files.length} files`
+              : "Upload file"}
+          </h2>
+          <button
+            onClick={onCancel}
+            className="text-[#5f6368] hover:bg-[#f1f3f4] rounded-full p-1.5 transition-colors"
+            aria-label="Cancel"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* File list preview */}
+        <div className="mb-4 max-h-32 overflow-y-auto space-y-1">
+          {files.slice(0, 5).map((f, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2 text-sm text-[#5f6368] truncate"
+            >
+              <span className="truncate">{f.name}</span>
+              <span className="text-[#80868b] text-xs shrink-0">
+                {(f.size / 1024 / 1024).toFixed(1)} MB
+              </span>
+            </div>
+          ))}
+          {files.length > 5 && (
+            <p className="text-xs text-[#80868b]">
+              +{files.length - 5} more…
+            </p>
+          )}
+        </div>
+
+        <label className="block text-sm font-medium text-[#202124] mb-1.5">
+          Title
+        </label>
+        <p className="text-xs text-[#80868b] mb-3">
+          What should this {files.length > 1 ? "be" : "file"} be called on the site?
+        </p>
+        <input
+          ref={titleInputRef}
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Enter a title…"
+          className="w-full px-3 py-2.5 border border-[#dadce0] rounded-lg text-sm text-[#202124] focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] mb-5"
+        />
+
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={onCancel}
+            disabled={uploading}
+            className="px-4 py-2 rounded-full text-sm font-medium text-[#1a73e8] hover:bg-[#f1f3f4] transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={uploading}
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#1a73e8] hover:bg-[#1765cc] text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          >
+            <Upload className="w-4 h-4" />
+            {uploading ? "Uploading..." : "Upload"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
 function UploadButton({
   uploading,
   fileInputRef,
-  onUpload,
+  onFileSelect,
 }: {
   uploading: boolean;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <>
@@ -190,7 +352,7 @@ function UploadButton({
         type="file"
         multiple
         accept="image/*,video/*,audio/*,.gif,.mp4,.webm,.mov,.avi,.mkv,.m4v,.mp3,.wav,.ogg,.m4a,.flac,.aac"
-        onChange={onUpload}
+        onChange={onFileSelect}
         className="hidden"
       />
       <button

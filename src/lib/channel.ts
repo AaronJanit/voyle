@@ -109,7 +109,8 @@ function getWriteClient() {
 export async function recordUpload(
   filePath: string,
   email: string,
-  name: string
+  name: string,
+  title?: string
 ): Promise<void> {
   const supabase = getWriteClient();
   if (!supabase) {
@@ -120,16 +121,18 @@ export async function recordUpload(
   }
 
   try {
+    const row: Record<string, unknown> = {
+      file_path: filePath,
+      uploader_email: email,
+      uploader_name: name,
+    };
+    if (title !== undefined) {
+      row.title = title;
+    }
+
     const { error } = await supabase
       .from("media")
-      .upsert(
-        {
-          file_path: filePath,
-          uploader_email: email,
-          uploader_name: name,
-        },
-        { onConflict: "file_path" }
-      );
+      .upsert(row, { onConflict: "file_path" });
 
     if (error) {
       console.error("recordUpload: Supabase error:", error.message);

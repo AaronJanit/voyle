@@ -13,6 +13,7 @@ export interface MediaItem {
   type: MediaType;
   size: number;
   isGenerated: boolean; // true if AI-generated (filename starts with "gen-")
+  mtime: number; // file modification time (ms since epoch)
 }
 
 const PHOTO_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".avif", ".bmp", ".tiff"];
@@ -67,6 +68,7 @@ function scanDir(dir: string, baseDir: string): MediaItem[] {
         type,
         size: stats.size,
         isGenerated: basename(entry).startsWith("gen-"),
+        mtime: stats.mtimeMs,
       });
     }
   }
@@ -89,8 +91,27 @@ export function scanMediaDir(): MediaItem[] {
 
   const mediaDir = join(process.cwd(), "media");
   cached = scanDir(mediaDir, mediaDir)
-    .filter((item) => !item.isGenerated)
+    .filter((item) => !item.isGenerated && item.type !== "audio")
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   cacheTime = now;
   return cached;
+}
+
+let audioCached: MediaItem[] | null = null;
+let audioCacheTime = 0;
+
+/** Scan the /media directory and return only audio items.
+ *  Has its own 5-second cache, separate from scanMediaDir(). */
+export function scanAudioDir(): MediaItem[] {
+  const now = Date.now();
+  if (audioCached && now - audioCacheTime < CACHE_TTL_MS) {
+    return audioCached;
+  }
+
+  const mediaDir = join(process.cwd(), "media");
+  audioCached = scanDir(mediaDir, mediaDir)
+    .filter((item) => item.type === "audio")
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  audioCacheTime = now;
+  return audioCached;
 }

@@ -3,7 +3,7 @@
 // name matches an attribution row. Reads the channel's content + audio
 // + stats from Supabase and hands everything to ChannelsView.
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   channelInfoForName,
   getAttributionMap,
@@ -11,6 +11,7 @@ import {
   getChannelAudio,
   getChannelStats,
 } from "@/lib/channel";
+import { getCurrentUser } from "@/lib/user";
 import ChannelsView from "@/components/ChannelsView";
 import type { CompactStats } from "@/lib/channel-stats";
 
@@ -30,9 +31,16 @@ export default async function ChannelDetailPage({ params }: PageProps) {
   const decodedName = decodeURIComponent(name);
 
   // Stats first — if the channel has no attributed files on disk at all
-  // we 404 rather than show a blank page.
+  // we 404 (or, for the visitor's own empty channel, redirect them to
+  // their management page so they can fix it).
   const stats = await getChannelStats(decodedName);
   if (stats.videos === 0 && stats.tracks === 0) {
+    // If the visitor is the channel owner, send them to their management
+    // page where they can upload. Anyone else just gets a 404.
+    const user = await getCurrentUser();
+    if (user && user.name === decodedName) {
+      redirect("/channel");
+    }
     notFound();
   }
 

@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const title = formData.get("title") as string | null;
+
   const files = formData.getAll("files").filter(
     (f): f is File => f instanceof File
   );
@@ -98,7 +100,7 @@ export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (user) {
     for (const filename of saved) {
-      await recordUpload(filename, user.email, user.name);
+      await recordUpload(filename, user.email, user.name, title ?? undefined);
     }
   }
 

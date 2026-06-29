@@ -20,7 +20,8 @@ interface MuzicClientProps {
  *      sticky "now playing" bar at the bottom featuring cover art,
  *      gradient backgrounds, custom transport, scrubber, volume,
  *      shuffle/repeat, and modern animated effects.
- *   2. Shmili Streamer — YouTube playlist player with auto-advance.
+ *   2. Shmili Streamer — YouTube playlist player with auto-advance,
+ *      autoplay, repeat, thumbnails, search, and keyboard shortcuts.
  */
 export default function MuzicClient({
   audioItems,
@@ -52,21 +53,8 @@ export default function MuzicClient({
         </Link>
       </div>
 
-      {/* Shmili Streamer section */}
+      {/* Tracks section (now above the streamer) */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-[color:var(--yt-text)] mb-3">
-          Shmili Streamer
-        </h2>
-        <ShmiliStreamer
-          links={streamLinks.map((l) => ({
-            youtubeId: l.youtubeId,
-            title: l.title,
-          }))}
-        />
-      </section>
-
-      {/* Tracks section */}
-      <section>
         <h2 className="text-lg font-semibold text-[color:var(--yt-text)] mb-4">
           Tracks
         </h2>
@@ -94,6 +82,19 @@ export default function MuzicClient({
             </div>
           </>
         )}
+      </section>
+
+      {/* Shmili Streamer section */}
+      <section className="mb-10">
+        <h2 className="text-lg font-semibold text-[color:var(--yt-text)] mb-3">
+          Shmili Streamer
+        </h2>
+        <ShmiliStreamer
+          links={streamLinks.map((l) => ({
+            youtubeId: l.youtubeId,
+            title: l.title,
+          }))}
+        />
       </section>
     </div>
   );

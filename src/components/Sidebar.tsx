@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, MessageSquare, Clapperboard, MessageCircle, Play, Music } from "lucide-react";
+import { Home, Sparkles, MessageSquare, Clapperboard, MessageCircle, Play, Music, Users } from "lucide-react";
 import { useSidebar } from "./SidebarContext";
 
 interface NavItem {
@@ -16,6 +16,7 @@ const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: <Home className="w-6 h-6 shrink-0" /> },
   { href: "/shorts", label: "Shorts", icon: <Play className="w-6 h-6 shrink-0" /> },
   { href: "/muzic", label: "Muzic", icon: <Music className="w-6 h-6 shrink-0" /> },
+  { href: "/channels", label: "Channels", icon: <Users className="w-6 h-6 shrink-0" /> },
 ];
 
 const CHAT_NAV: NavItem[] = [

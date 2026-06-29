@@ -136,6 +136,12 @@ export default function MediaGrid({ items }: { items: MediaItem[] }) {
                 playsInline
                 preload="metadata"
               />
+            ) : item.type === "audio" ? (
+              <div className="w-full h-full bg-[#e8eaed] flex items-center justify-center">
+                <svg className="w-10 h-10 text-[#5f6368]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+                </svg>
+              </div>
             ) : (
               <img
                 src={`/api/media/file/${item.path}`}
@@ -146,7 +152,7 @@ export default function MediaGrid({ items }: { items: MediaItem[] }) {
             )}
             {/* Hover overlay */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200" />
-            {item.type === "video" && (
+            {(item.type === "video" || item.type === "audio") && (
               <div className="absolute bottom-1 right-1 bg-black/60 rounded-full w-7 h-7 flex items-center justify-center">
                 <Play className="w-4 h-4 text-white fill-white" />
               </div>
@@ -183,7 +189,7 @@ function UploadButton({
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/*,video/*,.gif,.mp4,.webm,.mov,.avi,.mkv,.m4v"
+        accept="image/*,video/*,audio/*,.gif,.mp4,.webm,.mov,.avi,.mkv,.m4v,.mp3,.wav,.ogg,.m4a,.flac,.aac"
         onChange={onUpload}
         className="hidden"
       />

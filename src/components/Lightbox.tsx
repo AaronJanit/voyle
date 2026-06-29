@@ -84,6 +84,18 @@ export default function Lightbox({
             autoPlay
             playsInline
           />
+        ) : item.type === "audio" ? (
+          <div className="flex flex-col items-center gap-6">
+            <svg className="w-24 h-24 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+            </svg>
+            <audio
+              src={`/api/media/file/${item.path}`}
+              controls
+              autoPlay
+              className="w-80"
+            />
+          </div>
         ) : (
           <img
             src={`/api/media/file/${item.path}`}

@@ -32,6 +32,8 @@ const MIME_TYPES: Record<string, string> = {
   ".wav": "audio/wav",
   ".ogg": "audio/ogg",
   ".m4a": "audio/mp4",
+  ".flac": "audio/flac",
+  ".aac": "audio/aac",
 };
 
 export async function GET(

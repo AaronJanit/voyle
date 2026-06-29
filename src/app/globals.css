@@ -81,6 +81,21 @@ body {
   }
 }
 
+/* Subtle fade-in for newly inserted cards ------------------------------ */
+@keyframes yt-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-yt-fade-up {
+  animation: yt-fade-up 280ms ease-out both;
+}
+
 /* Custom keyframes for the Muzic feature -------------------------------- */
 @layer utilities {
   @keyframes spin-slow {

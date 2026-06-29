@@ -8,7 +8,7 @@
 // are non-NEXT_PUBLIC_ so they're read at runtime, not frozen at build.
 
 import { createClient } from "@supabase/supabase-js";
-import { scanMediaDir, MediaItem } from "@/lib/media";
+import { scanMediaDir, scanAudioDir, MediaItem } from "@/lib/media";
 
 /** A single attribution row from the `media` table. */
 export interface MediaAttribution {
@@ -24,6 +24,13 @@ export interface ChannelInfo {
   name: string;
   initial: string;
   color: string;
+}
+
+/** Attribution info for a single file: channel + upload date + views. */
+export interface FileAttribution {
+  channel: ChannelInfo;
+  uploadedAt: number | null; // ms since epoch, or null if unknown
+  views: number; // real view count from the DB (0 if unattributed)
 }
 
 const PALETTE = [
@@ -160,14 +167,14 @@ export async function getUploader(
 
 /**
  * Batch-lookup attribution for many file paths at once.
- * Returns a Map keyed by file path → ChannelInfo.
+ * Returns a Map keyed by file path → FileAttribution (channel + upload date).
  * Files without a row are simply absent from the map (caller falls back
  * to the fake channelFor() hash for those).
  */
 export async function getAttributionMap(
   paths: string[]
-): Promise<Map<string, ChannelInfo>> {
-  const result = new Map<string, ChannelInfo>();
+): Promise<Map<string, FileAttribution>> {
+  const result = new Map<string, FileAttribution>();
   if (paths.length === 0) return result;
 
   const supabase = getReadClient();
@@ -176,12 +183,19 @@ export async function getAttributionMap(
   try {
     const { data } = await supabase
       .from("media")
-      .select("file_path, uploader_name")
+      .select("file_path, uploader_name, created_at, views")
       .in("file_path", paths);
 
     if (data) {
       for (const row of data) {
-        result.set(row.file_path, channelInfoForName(row.uploader_name));
+        const uploadedAt = row.created_at
+          ? new Date(row.created_at).getTime()
+          : null;
+        result.set(row.file_path, {
+          channel: channelInfoForName(row.uploader_name),
+          uploadedAt,
+          views: typeof row.views === "number" ? row.views : 0,
+        });
       }
     }
   } catch (e) {
@@ -221,6 +235,32 @@ export async function getChannelContent(name: string): Promise<MediaItem[]> {
 }
 
 /**
+ * Get all audio items belonging to a channel (uploader name).
+ * Cross-references the `media` table with scanAudioDir() so only audio
+ * files that still exist on disk are returned.
+ */
+export async function getChannelAudio(name: string): Promise<MediaItem[]> {
+  const supabase = getReadClient();
+  if (!supabase) return [];
+
+  try {
+    const { data } = await supabase
+      .from("media")
+      .select("file_path")
+      .eq("uploader_name", name);
+
+    if (!data || data.length === 0) return [];
+
+    const channelPaths = new Set(data.map((r) => r.file_path));
+    const allAudio = scanAudioDir();
+    return allAudio.filter((item) => channelPaths.has(item.path));
+  } catch (e) {
+    console.error("getChannelAudio: error:", e);
+    return [];
+  }
+}
+
+/**
  * List all channels (distinct uploader names) with their content counts.
  * Useful for a future "browse all channels" page.
  */
@@ -248,5 +288,46 @@ export async function listChannels(): Promise<
   } catch (e) {
     console.error("listChannels: error:", e);
     return [];
+  }
+}
+
+/**
+ * Increment the view count for a single file.
+ * Uses the service-role (write) client to bypass RLS.
+ * Best-effort: logs errors but does not throw, so a failed view increment
+ * never blocks the share page from rendering.
+ *
+ * If the file has no attribution row yet, this is a no-op (we can't
+ * increment views on a row that doesn't exist). Views are only tracked
+ * for files that have been uploaded/attributed via recordUpload.
+ */
+export async function incrementViews(filePath: string): Promise<void> {
+  const supabase = getWriteClient();
+  if (!supabase) return; // silently skip if not configured
+
+  try {
+    // Fetch current views, then increment. We do a read-then-write
+    // instead of an RPC because Supabase doesn't expose arbitrary SQL
+    // without a stored procedure. The race condition (two concurrent
+    // views) is acceptable — a lost increment is off by at most 1.
+    const { data } = await supabase
+      .from("media")
+      .select("views")
+      .eq("file_path", filePath)
+      .single();
+
+    if (!data) return; // no attribution row → skip
+
+    const newCount = (data.views ?? 0) + 1;
+    const { error } = await supabase
+      .from("media")
+      .update({ views: newCount })
+      .eq("file_path", filePath);
+
+    if (error) {
+      console.error("incrementViews: Supabase error:", error.message);
+    }
+  } catch (e) {
+    console.error("incrementViews: unexpected error:", e);
   }
 }

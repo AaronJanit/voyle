@@ -11,6 +11,7 @@ import { headers } from "next/headers";
 import ShareClient from "./ShareClient";
 import { scanMediaDir } from "@/lib/media";
 import { getCurrentUser } from "@/lib/user";
+import { incrementViews } from "@/lib/channel";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,10 @@ export default async function PhotoPage({ params }: PageProps) {
   const host = h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? "http";
   const origin = `${proto}://${host}`;
+
+  // Increment the view count for this file (best-effort, non-blocking).
+  // We don't await this so the page renders immediately.
+  incrementViews(item.path).catch(() => {});
 
   return <ShareClient item={item} origin={origin} />;
 }

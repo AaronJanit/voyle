@@ -4,15 +4,17 @@ import { MediaItem } from "@/lib/media";
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { Upload } from "lucide-react";
-import { ChannelInfo } from "@/lib/channel";
+import { ChannelInfo, FileAttribution } from "@/lib/channel";
 
 interface ChannelViewProps {
   items: MediaItem[];
+  audioItems?: MediaItem[];
   channel: ChannelInfo;
   isOwnChannel: boolean;
+  attribution?: Map<string, FileAttribution>;
 }
 
-type Tab = "videos" | "about";
+type Tab = "videos" | "muzic" | "about";
 
 /* YouTube-style channel page.
  *
@@ -27,15 +29,23 @@ type Tab = "videos" | "about";
  */
 export default function ChannelView({
   items,
+  audioItems = [],
   channel,
   isOwnChannel,
+  attribution,
 }: ChannelViewProps) {
   // New channels (no uploads yet) skip the empty Videos grid and go
   // straight to the About tab so the "how to get started" guidance is
   // the first thing the user sees.
   const [tab, setTab] = useState<Tab>(
-    isOwnChannel && items.length === 0 ? "about" : "videos"
+    isOwnChannel && items.length === 0 && audioItems.length === 0
+      ? "about"
+      : items.length === 0 && audioItems.length > 0
+        ? "muzic"
+        : "videos"
   );
+
+  const hasAudio = audioItems.length > 0;
 
   return (
     <div className="max-w-[1600px] mx-auto pb-12">
@@ -43,16 +53,19 @@ export default function ChannelView({
       <ChannelHeader
         channel={channel}
         items={items}
+        audioCount={audioItems.length}
         isOwnChannel={isOwnChannel}
       />
-      <TabBar tab={tab} setTab={setTab} />
+      <TabBar tab={tab} setTab={setTab} hasAudio={hasAudio} />
 
       {tab === "videos" ? (
-        <VideosTab items={items} isOwnChannel={isOwnChannel} />
+        <VideosTab items={items} isOwnChannel={isOwnChannel} attribution={attribution} />
+      ) : tab === "muzic" ? (
+        <MuzicTab items={audioItems} isOwnChannel={isOwnChannel} attribution={attribution} />
       ) : (
         <AboutTab
           isOwnChannel={isOwnChannel}
-          isEmpty={items.length === 0}
+          isEmpty={items.length === 0 && audioItems.length === 0}
         />
       )}
     </div>
@@ -83,10 +96,12 @@ function ChannelBanner({ channel }: { channel: ChannelInfo }) {
 function ChannelHeader({
   channel,
   items,
+  audioCount,
   isOwnChannel,
 }: {
   channel: ChannelInfo;
   items: MediaItem[];
+  audioCount: number;
   isOwnChannel: boolean;
 }) {
   return (
@@ -110,6 +125,14 @@ function ChannelHeader({
             <span>
               {items.length} {items.length === 1 ? "video" : "videos"}
             </span>
+            {audioCount > 0 && (
+              <>
+                <span aria-hidden>·</span>
+                <span>
+                  {audioCount} {audioCount === 1 ? "track" : "tracks"}
+                </span>
+              </>
+            )}
           </div>
           <p className="mt-1 text-sm text-[color:var(--yt-text-secondary)]">
             Welcome to {channel.name}&apos;s channel.
@@ -162,7 +185,7 @@ function UploadButton() {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/*,video/*,.gif,.mp4,.webm,.mov,.avi,.mkv,.m4v"
+        accept="image/*,video/*,audio/*,.gif,.mp4,.webm,.mov,.avi,.mkv,.m4v,.mp3,.wav,.ogg,.m4a"
         onChange={handleUpload}
         className="hidden"
       />
@@ -188,9 +211,10 @@ function UploadButton() {
  * Tab bar — sits below the channel header, above the content.
  * YouTube-style underline indicator on the active tab.
  * ------------------------------------------------------------------------- */
-function TabBar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
+function TabBar({ tab, setTab, hasAudio }: { tab: Tab; setTab: (t: Tab) => void; hasAudio: boolean }) {
   const tabs: { key: Tab; label: string }[] = [
     { key: "videos", label: "Videos" },
+    ...(hasAudio ? [{ key: "muzic" as Tab, label: "Muzic" }] : []),
     { key: "about", label: "About" },
   ];
 
@@ -236,9 +260,11 @@ function TabBar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
 function VideosTab({
   items,
   isOwnChannel,
+  attribution,
 }: {
   items: MediaItem[];
   isOwnChannel: boolean;
+  attribution?: Map<string, FileAttribution>;
 }) {
   if (items.length === 0) {
     return (
@@ -268,8 +294,108 @@ function VideosTab({
     <div className="px-4 sm:px-6 pt-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
         {items.map((item) => (
-          <ChannelCard key={item.id} item={item} />
+          <ChannelCard key={item.id} item={item} attribution={attribution} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Muzic tab — audio grid with inline players.
+ * ------------------------------------------------------------------------- */
+function MuzicTab({
+  items,
+  isOwnChannel,
+  attribution,
+}: {
+  items: MediaItem[];
+  isOwnChannel: boolean;
+  attribution?: Map<string, FileAttribution>;
+}) {
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center py-24 px-4">
+        <div className="w-16 h-16 rounded-full bg-[color:var(--yt-chip)] flex items-center justify-center mb-4">
+          <svg
+            viewBox="0 0 24 24"
+            className="w-8 h-8 text-[color:var(--yt-text-secondary)]"
+            fill="currentColor"
+          >
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+          </svg>
+        </div>
+        <p className="text-base font-medium text-[color:var(--yt-text)]">
+          {isOwnChannel ? "No tracks yet" : "This channel has no tracks yet"}
+        </p>
+        <p className="mt-1 text-sm text-[color:var(--yt-text-secondary)] max-w-sm">
+          {isOwnChannel
+            ? "Upload sound files (.mp3, .wav, .ogg, .m4a) using the button above to get started."
+            : "Check back later for new tracks."}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 sm:px-6 pt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-4">
+        {items.map((item) => (
+          <AudioCard key={item.id} item={item} attribution={attribution} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Audio card — title + inline audio player + attribution.
+ * ------------------------------------------------------------------------- */
+function AudioCard({
+  item,
+  attribution,
+}: {
+  item: MediaItem;
+  attribution?: Map<string, FileAttribution>;
+}) {
+  const realAttribution = attribution?.get(item.path);
+  const channelName = realAttribution?.channel.name;
+
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-[color:var(--yt-surface)] border border-[color:var(--yt-border)]">
+      <div
+        className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center"
+        style={{
+          backgroundColor: realAttribution?.channel.color ?? "var(--yt-chip)",
+        }}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          className="w-6 h-6 text-white"
+          fill="currentColor"
+        >
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+        </svg>
+      </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="text-sm font-medium leading-snug truncate text-[color:var(--yt-text)]">
+          {prettyTitle(item.name)}
+        </h3>
+        {channelName && (
+          <Link
+            href={`/channel/${encodeURIComponent(channelName)}`}
+            className="text-xs text-[color:var(--yt-text-secondary)] hover:text-[color:var(--yt-blue)]"
+          >
+            {channelName}
+          </Link>
+        )}
+        <audio
+          controls
+          controlsList="nodownload"
+          preload="metadata"
+          src={`/api/media/file/${item.path}`}
+          className="mt-1 w-full h-8"
+        />
       </div>
     </div>
   );
@@ -588,8 +714,16 @@ function HowToCreate() {
 /* ----------------------------------------------------------------------------
  * A single video card in the channel grid — same style as YouTubeGrid.
  * ------------------------------------------------------------------------- */
-function ChannelCard({ item }: { item: MediaItem }) {
+function ChannelCard({
+  item,
+  attribution,
+}: {
+  item: MediaItem;
+  attribution?: Map<string, FileAttribution>;
+}) {
   const shareUrl = `/p/${encodeURIComponent(item.path)}`;
+  const realAttribution = attribution?.get(item.path);
+  const date = realAttribution?.uploadedAt ?? item.mtime;
 
   return (
     <article className="group">
@@ -635,6 +769,9 @@ function ChannelCard({ item }: { item: MediaItem }) {
             {prettyTitle(item.name)}
           </Link>
         </h3>
+        <p className="mt-1 text-xs text-[color:var(--yt-text-secondary)]">
+          {formatViews(item, attribution)} · {timeAgo(date)}
+        </p>
       </div>
     </article>
   );
@@ -658,4 +795,46 @@ function prettyTitle(filename: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/* ── View count + date helpers (shared logic with YouTubeGrid) ─────── */
+
+/* Compact number formatting: 1234 → "1.2K", 1234567 → "1.2M". */
+function compactNumber(n: number): string {
+  if (n >= 1_000_000) {
+    const m = n / 1_000_000;
+    return m >= 10 ? `${Math.round(m)}M` : `${m.toFixed(1)}M`;
+  }
+  if (n >= 1_000) {
+    const k = n / 1_000;
+    return k >= 10 ? `${Math.round(k)}K` : `${k.toFixed(1)}K`;
+  }
+  return `${n}`;
+}
+
+/* Format the real view count from the database (via attribution).
+ * Falls back to 0 for unattributed files. */
+function formatViews(
+  item: MediaItem,
+  attribution?: Map<string, FileAttribution>
+): string {
+  const views = attribution?.get(item.path)?.views ?? 0;
+  return `${compactNumber(views)} views`;
+}
+
+function timeAgo(timestamp: number): string {
+  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
 }

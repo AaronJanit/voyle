@@ -28,6 +28,10 @@ const MIME_TYPES: Record<string, string> = {
   ".avi": "video/x-msvideo",
   ".mkv": "video/x-matroska",
   ".m4v": "video/x-m4v",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".ogg": "audio/ogg",
+  ".m4a": "audio/mp4",
 };
 
 export async function GET(

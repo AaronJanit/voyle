@@ -5,12 +5,12 @@ import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { Upload } from "lucide-react";
 import { CurrentUser } from "@/lib/user";
-import { ChannelInfo } from "@/lib/channel";
+import { ChannelInfo, FileAttribution } from "@/lib/channel";
 
 interface YouTubeGridProps {
   items: MediaItem[];
   user: CurrentUser | null;
-  attribution?: Map<string, ChannelInfo>;
+  attribution?: Map<string, FileAttribution>;
 }
 
 interface Filter {
@@ -89,41 +89,44 @@ function channelFor(name: string): { name: string; initial: string; color: strin
   };
 }
 
-/* Format a bytes-since-epoch-like view count into a short string. */
-function formatViews(seed: number): string {
-  const buckets = [
-    "12K views",
-    "48K views",
-    "123K views",
-    "1.2M views",
-    "3.4M views",
-    "812K views",
-    "67K views",
-    "2.1M views",
-    "Recommended for you",
-    "543 views",
-    "5.7K views",
-    "27K views",
-    "99K views",
-  ];
-  return buckets[Math.abs(seed) % buckets.length];
+/* Format a view count into a short string like "12K views" or "1.2M views".
+ * Uses the real view count from the database when available (via
+ * attribution), falling back to 0 for unattributed files. */
+function formatViews(item: MediaItem, attribution?: Map<string, FileAttribution>): string {
+  const views = attribution?.get(item.path)?.views ?? 0;
+  return `${compactNumber(views)} views`;
 }
 
-function timeAgo(seed: number): string {
-  const choices = [
-    "3 hours ago",
-    "1 day ago",
-    "2 days ago",
-    "1 week ago",
-    "3 weeks ago",
-    "1 month ago",
-    "3 months ago",
-    "6 months ago",
-    "1 year ago",
-    "2 years ago",
-    "Streamed 2 days ago",
-  ];
-  return choices[Math.abs(seed) % choices.length];
+/* Compact number formatting: 1234 → "1.2K", 1234567 → "1.2M". */
+function compactNumber(n: number): string {
+  if (n >= 1_000_000) {
+    const m = n / 1_000_000;
+    return m >= 10 ? `${Math.round(m)}M` : `${m.toFixed(1)}M`;
+  }
+  if (n >= 1_000) {
+    const k = n / 1_000;
+    return k >= 10 ? `${Math.round(k)}K` : `${k.toFixed(1)}K`;
+  }
+  return `${n}`;
+}
+
+/* Human-readable "time ago" string from a timestamp (ms since epoch).
+ * Produces "3 hours ago", "2 days ago", "1 month ago", etc. */
+function timeAgo(timestamp: number): string {
+  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
 export default function YouTubeGrid({
@@ -221,7 +224,6 @@ export default function YouTubeGrid({
             <VideoCard
               key={item.id}
               item={item}
-              seed={hashSeed(item.name) + i}
               attribution={attribution}
             />
           ))}
@@ -238,28 +240,19 @@ export default function YouTubeGrid({
   );
 }
 
-/* Stable per-name hash → a 32-bit int. */
-function hashSeed(name: string): number {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) {
-    h = (h * 31 + name.charCodeAt(i)) | 0;
-  }
-  return h;
-}
-
 function VideoCard({
   item,
-  seed,
   attribution,
 }: {
   item: MediaItem;
-  seed: number;
-  attribution?: Map<string, ChannelInfo>;
+  attribution?: Map<string, FileAttribution>;
 }) {
   // Use real attribution if available; fall back to the fake hash for
   // legacy/unattributed files so the grid never breaks.
-  const realChannel = attribution?.get(item.path);
-  const channel = realChannel ?? channelFor(item.name);
+  const realAttribution = attribution?.get(item.path);
+  const channel = realAttribution?.channel ?? channelFor(item.name);
+  // Prefer the real upload date from the DB; fall back to the file's mtime.
+  const date = realAttribution?.uploadedAt ?? item.mtime;
   const shareUrl = `/p/${encodeURIComponent(item.path)}`;
   const channelUrl = `/channel/${encodeURIComponent(channel.name)}`;
 
@@ -326,7 +319,7 @@ function VideoCard({
             </Link>
           </p>
           <p className="text-xs text-[color:var(--yt-text-secondary)]">
-            {formatViews(seed)} · {timeAgo(seed)}
+            {formatViews(item, attribution)} · {timeAgo(date)}
           </p>
         </div>
       </div>

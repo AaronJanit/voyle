@@ -5,7 +5,7 @@
 
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/user";
-import { getChannelContent, channelInfoForName } from "@/lib/channel";
+import { getChannelContent, getChannelAudio, channelInfoForName, getAttributionMap } from "@/lib/channel";
 import ChannelView from "@/components/ChannelView";
 
 export const dynamic = "force-dynamic";
@@ -15,13 +15,18 @@ export default async function MyChannelPage() {
   if (!user) redirect("/login");
 
   const items = await getChannelContent(user.name);
+  const audioItems = await getChannelAudio(user.name);
   const channel = channelInfoForName(user.name);
+  const allPaths = [...items.map((i) => i.path), ...audioItems.map((i) => i.path)];
+  const attribution = await getAttributionMap(allPaths);
 
   return (
     <ChannelView
       items={items}
+      audioItems={audioItems}
       channel={channel}
       isOwnChannel={true}
+      attribution={attribution}
     />
   );
 }

@@ -14,11 +14,30 @@ CREATE TABLE IF NOT EXISTS media (
   uploader_email TEXT NOT NULL,    -- stable identity (users.email)
   uploader_name TEXT NOT NULL,     -- display name (e.g. "Aaron")
   title TEXT,                       -- optional custom title (null = filename)
+  views BIGINT NOT NULL DEFAULT 0,  -- view count (incremented on each /p/[id] visit)
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Add views column if the table already exists without it (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'media' AND column_name = 'views'
+  ) THEN
+    ALTER TABLE media ADD COLUMN views BIGINT NOT NULL DEFAULT 0;
+  END IF;
+END $$;
+
 -- Enable Row Level Security
 ALTER TABLE media ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies first so this file is fully idempotent
+-- (Postgres has no CREATE POLICY IF NOT EXISTS).
+DROP POLICY IF EXISTS "Anyone can read media" ON media;
+DROP POLICY IF EXISTS "No public inserts" ON media;
+DROP POLICY IF EXISTS "No public updates" ON media;
+DROP POLICY IF EXISTS "No public deletes" ON media;
 
 -- Anyone can read (all authenticated users can browse channels)
 CREATE POLICY "Anyone can read media" ON media

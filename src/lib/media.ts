@@ -4,7 +4,7 @@
 import { readdirSync, statSync } from "node:fs";
 import { join, relative, extname, basename } from "node:path";
 
-export type MediaType = "photo" | "gif" | "video";
+export type MediaType = "photo" | "gif" | "video" | "audio";
 
 export interface MediaItem {
   id: string;
@@ -13,17 +13,20 @@ export interface MediaItem {
   type: MediaType;
   size: number;
   isGenerated: boolean; // true if AI-generated (filename starts with "gen-")
+  mtime: number; // file modification time (ms since epoch)
 }
 
 const PHOTO_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".avif", ".bmp", ".tiff"];
 const GIF_EXTS = [".gif"];
 const VIDEO_EXTS = [".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v"];
+const AUDIO_EXTS = [".mp3", ".wav", ".ogg", ".m4a"];
 
 /** Returns the MediaType for a given lowercase extension, or null if unsupported. */
 export function classifyExtension(ext: string): MediaType | null {
   if (PHOTO_EXTS.includes(ext)) return "photo";
   if (GIF_EXTS.includes(ext)) return "gif";
   if (VIDEO_EXTS.includes(ext)) return "video";
+  if (AUDIO_EXTS.includes(ext)) return "audio";
   return null;
 }
 
@@ -65,6 +68,7 @@ function scanDir(dir: string, baseDir: string): MediaItem[] {
         type,
         size: stats.size,
         isGenerated: basename(entry).startsWith("gen-"),
+        mtime: stats.mtimeMs,
       });
     }
   }
@@ -87,8 +91,27 @@ export function scanMediaDir(): MediaItem[] {
 
   const mediaDir = join(process.cwd(), "media");
   cached = scanDir(mediaDir, mediaDir)
-    .filter((item) => !item.isGenerated)
+    .filter((item) => !item.isGenerated && item.type !== "audio")
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   cacheTime = now;
   return cached;
+}
+
+let audioCached: MediaItem[] | null = null;
+let audioCacheTime = 0;
+
+/** Scan the /media directory and return only audio items.
+ *  Has its own 5-second cache, separate from scanMediaDir(). */
+export function scanAudioDir(): MediaItem[] {
+  const now = Date.now();
+  if (audioCached && now - audioCacheTime < CACHE_TTL_MS) {
+    return audioCached;
+  }
+
+  const mediaDir = join(process.cwd(), "media");
+  audioCached = scanDir(mediaDir, mediaDir)
+    .filter((item) => item.type === "audio")
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  audioCacheTime = now;
+  return audioCached;
 }

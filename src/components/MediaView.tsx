@@ -7,14 +7,14 @@ import MediaGrid from "./MediaGrid";
 import ShortsViewer from "./ShortsViewer";
 import YouTubeGrid from "./YouTubeGrid";
 import { CurrentUser } from "@/lib/user";
-import { ChannelInfo } from "@/lib/channel";
+import { FileAttribution } from "@/lib/channel";
 
 export type ViewMode = "grid" | "shorts";
 
 interface MediaViewProps {
   items: MediaItem[];
   user: CurrentUser | null;
-  attribution?: Map<string, ChannelInfo>;
+  attribution?: Map<string, FileAttribution>;
 }
 
 /* The MediaView owns three display modes:

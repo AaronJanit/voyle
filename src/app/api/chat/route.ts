@@ -1,12 +1,10 @@
 // Voyle — chat API route
 // POST /api/chat → streams a response from Ollama Cloud.
-// Body: { messages: ChatMessage[], conversationId?: string }
-// Persists user + assistant messages to the database.
+// Body: { messages: ChatMessage[] }
 
 import { NextRequest } from "next/server";
 import { streamChat, parseOllamaStream, ChatMessage } from "@/lib/ollama";
 import { getSystemPrompt } from "@/lib/prompts";
-import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,36 +31,6 @@ export async function POST(request: NextRequest) {
     ...userMessages,
   ];
 
-  // Persist the latest user message
-  let conversationId = body.conversationId;
-  const lastUserMsg = [...userMessages].reverse().find((m) => m.role === "user");
-
-  if (lastUserMsg) {
-    try {
-      if (!conversationId) {
-        const conversation = await prisma.conversation.create({
-          data: {
-            title: lastUserMsg.content.slice(0, 50),
-            messages: {
-              create: { role: "user", content: lastUserMsg.content },
-            },
-          },
-        });
-        conversationId = conversation.id;
-      } else {
-        await prisma.message.create({
-          data: {
-            conversationId,
-            role: "user",
-            content: lastUserMsg.content,
-          },
-        });
-      }
-    } catch (e) {
-      console.error("Failed to persist user message:", e);
-    }
-  }
-
   // Stream from Ollama
   let ollamaResponse: Response;
   try {
@@ -74,15 +42,13 @@ export async function POST(request: NextRequest) {
 
   // Create a transformed stream that:
   // 1. Extracts content tokens from NDJSON
-  // 2. Collects the full assistant response for DB persistence
-  let fullAssistantContent = "";
+  // 2. Forwards them to the client as plain text
   const encoder = new TextEncoder();
 
   const transformedStream = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
         for await (const token of parseOllamaStream(ollamaResponse)) {
-          fullAssistantContent += token;
           controller.enqueue(encoder.encode(token));
         }
       } catch (e) {
@@ -91,21 +57,6 @@ export async function POST(request: NextRequest) {
         );
       } finally {
         controller.close();
-
-        // Persist the assistant response
-        if (conversationId && fullAssistantContent) {
-          try {
-            await prisma.message.create({
-              data: {
-                conversationId,
-                role: "assistant",
-                content: fullAssistantContent,
-              },
-            });
-          } catch (e) {
-            console.error("Failed to persist assistant message:", e);
-          }
-        }
       }
     },
   });
@@ -114,7 +65,6 @@ export async function POST(request: NextRequest) {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-cache",
-      "X-Conversation-Id": conversationId || "",
     },
   });
 }

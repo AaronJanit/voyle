@@ -95,7 +95,7 @@ export default function GenerateContent() {
         });
       }
 
-      const data = await res.json();
+      const data: { image?: string; mode?: string; error?: string } = await res.json();
 
       if (res.ok) {
         setGallery((prev) => [

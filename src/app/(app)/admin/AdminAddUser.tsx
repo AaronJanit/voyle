@@ -21,7 +21,7 @@ export default function AdminAddUser() {
         body: JSON.stringify({ email: email.trim().toLowerCase(), name: name.trim() }),
       });
 
-      const data = await res.json();
+      const data: { message?: string; error?: string } = await res.json();
 
       if (res.ok) {
         setStatus("success");

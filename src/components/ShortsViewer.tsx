@@ -1,6 +1,6 @@
 "use client";
 
-import { MediaItem } from "@/lib/media";
+import { MediaItem, mediaUrl } from "@/lib/media";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -137,7 +137,7 @@ export default function ShortsViewer({ items }: { items: MediaItem[] }) {
           <video
             ref={videoRef}
             key={item.id}
-            src={`/api/media/file/${item.path}`}
+            src={`mediaUrl(item.path)`}
             className="max-h-full max-w-full object-contain"
             playsInline
             muted
@@ -146,7 +146,7 @@ export default function ShortsViewer({ items }: { items: MediaItem[] }) {
         ) : (
           <img
             key={item.id}
-            src={`/api/media/file/${item.path}`}
+            src={`mediaUrl(item.path)`}
             alt={item.name}
             className="max-h-full max-w-full object-contain"
           />

@@ -10,7 +10,7 @@ import MuzicClient from "@/components/MuzicClient";
 export const dynamic = "force-dynamic";
 
 export default async function MuzicPage() {
-  const audioItems = scanAudioDir();
+  const audioItems = await scanAudioDir();
   const attribution = await getAttributionMap(audioItems.map((i) => i.path));
   const streamLinks = await getStreamLinks();
 

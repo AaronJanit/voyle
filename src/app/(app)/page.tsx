@@ -15,7 +15,7 @@ interface PageProps {
 }
 
 export default async function HomePage({ searchParams }: PageProps) {
-  const items = scanMediaDir();
+  const items = await scanMediaDir();
   const user = await getCurrentUser();
   const sp = await searchParams;
   const search = typeof sp.search === "string" ? sp.search : "";

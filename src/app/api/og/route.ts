@@ -16,7 +16,7 @@
 // Public — no auth required.
 
 import { NextRequest, NextResponse } from "next/server";
-import { scanMediaDir } from "@/lib/media";
+import { scanMediaDir, mediaUrl } from "@/lib/media";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,23 +30,21 @@ export async function GET(request: NextRequest) {
   }
 
   const path = decodeURIComponent(rawPath);
-  const item = scanMediaDir().find((it) => it.path === path);
+  const item = (await scanMediaDir()).find((it) => it.path === path);
   if (!item) {
     return posterSvg("voyle", "not found", null);
   }
 
-  const proto = request.headers.get("x-forwarded-proto") ?? "http";
-  const host = request.headers.get("host") ?? "localhost:3000";
-  const mediaUrl = `${proto}://${host}/api/media/file/${item.path}`;
+  const mediaUrlStr = mediaUrl(item.path);
 
   // Images & gifs → redirect crawlers to the raw media file. This gives them
   // the actual asset with no processing cost.
   if (item.type === "photo" || item.type === "gif") {
-    return NextResponse.redirect(mediaUrl, 302);
+    return NextResponse.redirect(mediaUrlStr, 302);
   }
 
   // Videos → no good thumbnail, so generate an SVG poster
-  return posterSvg(item.name, "video", mediaUrl);
+  return posterSvg(item.name, "video", mediaUrlStr);
 }
 
 /**

@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import ShareClient from "./ShareClient";
-import { scanMediaDir } from "@/lib/media";
+import { scanMediaDir, mediaUrl } from "@/lib/media";
 import { getCurrentUser } from "@/lib/user";
 import { incrementViews } from "@/lib/channel";
 
@@ -19,16 +19,16 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-function findItem(id: string) {
+async function findItem(id: string) {
   // id may contain encoded slashes (subfolders)
   const decoded = decodeURIComponent(id);
-  const items = scanMediaDir();
+  const items = await scanMediaDir();
   return items.find((it) => it.path === decoded) ?? null;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const item = findItem(id);
+  const item = await findItem(id);
   if (!item) {
     return {
       title: "Not found · voyle",
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const proto = h.get("x-forwarded-proto") ?? "http";
   const host = h.get("host") ?? "localhost:3000";
   const origin = `${proto}://${host}`;
-  const mediaUrl = `${origin}/api/media/file/${item.path}`;
+  const mediaUrlStr = mediaUrl(item.path);
   const pageUrl = `${origin}/p/${id}`;
   const ogImageUrl = `${origin}/api/og?path=${encodeURIComponent(item.path)}`;
 
@@ -77,7 +77,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
           alt: item.name,
         },
       ],
-      videos: item.type === "video" ? [{ url: mediaUrl }] : undefined,
+      videos: item.type === "video" ? [{ url: mediaUrlStr }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
@@ -94,7 +94,7 @@ export default async function PhotoPage({ params }: PageProps) {
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const item = findItem(id);
+  const item = await findItem(id);
   if (!item) notFound();
 
   const h = await headers();

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ChannelInfo, FileAttribution } from "@/lib/channel";
-import { MediaItem } from "@/lib/media";
+import { MediaItem, mediaUrl } from "@/lib/media";
 import type { CompactStats } from "@/lib/channel-stats";
 
 /* ChannelsView — full YouTube-style channel details page rendered at
@@ -499,7 +499,7 @@ function MediaCard({
       <div className="relative aspect-video rounded-xl overflow-hidden bg-[color:var(--yt-chip)]">
         {item.type === "video" ? (
           <video
-            src={`/api/media/file/${item.path}`}
+            src={`mediaUrl(item.path)`}
             className="w-full h-full object-cover"
             muted
             playsInline
@@ -507,7 +507,7 @@ function MediaCard({
           />
         ) : (
           <img
-            src={`/api/media/file/${item.path}`}
+            src={`mediaUrl(item.path)`}
             alt={prettyTitle(item.name)}
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
@@ -595,7 +595,7 @@ function AudioCard({
           controls
           controlsList="nodownload"
           preload="metadata"
-          src={`/api/media/file/${item.path}`}
+          src={`mediaUrl(item.path)`}
           className="mt-1 w-full h-8"
         />
       </div>

@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { scanMediaDir } from "@/lib/media";
+import { scanMediaDir, mediaUrl } from "@/lib/media";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   const decoded = decodeURIComponent(id);
 
   // Look up the media item
-  const item = scanMediaDir().find((it) => it.path === decoded);
+  const item = (await scanMediaDir()).find((it) => it.path === decoded);
   if (!item) {
     return oembedError(format, "Not found", 404);
   }
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
   const proto = request.headers.get("x-forwarded-proto") ?? parsed.protocol.replace(":", "");
   const host = request.headers.get("host") ?? parsed.host;
   const origin = `${proto}://${host}`;
-  const mediaUrl = `${origin}/api/media/file/${item.path}`;
+  const mediaUrlStr = mediaUrl(item.path);
   const pageUrl = `${origin}/p/${encodeURIComponent(item.path)}`;
   const embedUrl = `${origin}/embed/${encodeURIComponent(item.path)}`;
   const thumbUrl = `${origin}/api/og?path=${encodeURIComponent(item.path)}`;
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     cache_age: 300,
     width,
     height,
-    url: type === "photo" ? mediaUrl : undefined,
+    url: type === "photo" ? mediaUrlStr : undefined,
     html: type === "rich" ? html : undefined,
     thumbnail_url: thumbUrl,
     thumbnail_width: 1200,

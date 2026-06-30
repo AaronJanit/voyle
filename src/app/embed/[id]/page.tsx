@@ -4,7 +4,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { scanMediaDir } from "@/lib/media";
+import { scanMediaDir, mediaUrl } from "@/lib/media";
 import { getCurrentUser } from "@/lib/user";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +20,10 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-function findItem(id: string) {
+async function findItem(id: string) {
   const decoded = decodeURIComponent(id);
-  return scanMediaDir().find((it) => it.path === decoded) ?? null;
+  const items = await scanMediaDir();
+  return items.find((it) => it.path === decoded) ?? null;
 }
 
 export default async function EmbedPage({ params }: PageProps) {
@@ -30,14 +31,14 @@ export default async function EmbedPage({ params }: PageProps) {
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const item = findItem(id);
+  const item = await findItem(id);
   if (!item) notFound();
 
   const h = await headers();
   const proto = h.get("x-forwarded-proto") ?? "http";
   const host = h.get("host") ?? "localhost:3000";
   const origin = `${proto}://${host}`;
-  const mediaUrl = `${origin}/api/media/file/${item.path}`;
+  const mediaUrlStr = mediaUrl(item.path);
   const pageUrl = `${origin}/p/${encodeURIComponent(item.path)}`;
 
   return (
@@ -46,7 +47,7 @@ export default async function EmbedPage({ params }: PageProps) {
       <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
         {item.type === "video" ? (
           <video
-            src={mediaUrl}
+            src={mediaUrlStr}
             controls
             autoPlay
             muted
@@ -58,7 +59,7 @@ export default async function EmbedPage({ params }: PageProps) {
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={mediaUrl}
+            src={mediaUrlStr}
             alt={item.name}
             className="max-w-full max-h-full object-contain rounded-[14px]"
             style={{ maxHeight: "calc(100vh - 40px)" }}

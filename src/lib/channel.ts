@@ -8,7 +8,8 @@
 // are non-NEXT_PUBLIC_ so they're read at runtime, not frozen at build.
 
 import { createClient } from "@supabase/supabase-js";
-import { scanMediaDir, scanAudioDir, MediaItem } from "@/lib/media";
+import { MediaItem } from "@/lib/media";
+import { basename } from "node:path";
 
 /** A single attribution row from the `media` table. */
 export interface MediaAttribution {
@@ -31,6 +32,30 @@ export interface FileAttribution {
   channel: ChannelInfo;
   uploadedAt: number | null; // ms since epoch, or null if unknown
   views: number; // real view count from the DB (0 if unattributed)
+}
+
+/** Raw row shape from the `media` table. */
+interface MediaRow {
+  file_path: string;
+  type: string;
+  size: number;
+  storage_key: string | null;
+  created_at: string | null;
+}
+
+/** Convert a `media` table row into a MediaItem. */
+function rowToItem(row: MediaRow): MediaItem {
+  const path = row.storage_key ?? row.file_path;
+  const name = basename(row.file_path);
+  return {
+    id: row.file_path,
+    name,
+    path,
+    type: (row.type as MediaItem["type"]) ?? "photo",
+    size: row.size ?? 0,
+    isGenerated: name.startsWith("gen-"),
+    mtime: row.created_at ? new Date(row.created_at).getTime() : 0,
+  };
 }
 
 const PALETTE = [
@@ -105,12 +130,23 @@ function getWriteClient() {
  * Record that a user uploaded/generated a file.
  * Best-effort: logs errors but does not throw, so a failed attribution
  * write never blocks a successful upload.
+ *
+ * @param filePath   R2 object key (relative path)
+ * @param email      uploader email
+ * @param name       uploader display name
+ * @param title      optional custom title
+ * @param type       media type ("photo"|"gif"|"video"|"audio")
+ * @param size       file size in bytes
+ * @param storageKey R2 storage key (defaults to filePath if omitted)
  */
 export async function recordUpload(
   filePath: string,
   email: string,
   name: string,
-  title?: string
+  title?: string,
+  type?: string,
+  size?: number,
+  storageKey?: string
 ): Promise<void> {
   const supabase = getWriteClient();
   if (!supabase) {
@@ -128,6 +164,15 @@ export async function recordUpload(
     };
     if (title !== undefined) {
       row.title = title;
+    }
+    if (type !== undefined) {
+      row.type = type;
+    }
+    if (size !== undefined) {
+      row.size = size;
+    }
+    if (storageKey !== undefined) {
+      row.storage_key = storageKey;
     }
 
     const { error } = await supabase
@@ -210,8 +255,8 @@ export async function getAttributionMap(
 
 /**
  * Get all media items belonging to a channel (uploader name).
- * Cross-references the `media` table with scanMediaDir() so only files
- * that still exist on disk are returned.
+ * Queries the `media` table directly (no disk cross-reference needed
+ * since the DB is now the source of truth).
  */
 export async function getChannelContent(name: string): Promise<MediaItem[]> {
   const supabase = getReadClient();
@@ -220,17 +265,16 @@ export async function getChannelContent(name: string): Promise<MediaItem[]> {
   try {
     const { data } = await supabase
       .from("media")
-      .select("file_path")
-      .eq("uploader_name", name);
+      .select("file_path, type, size, storage_key, created_at")
+      .eq("uploader_name", name)
+      .in("type", ["photo", "gif", "video"]);
 
     if (!data || data.length === 0) return [];
 
-    // Build a set of attributed file paths for this channel
-    const channelPaths = new Set(data.map((r) => r.file_path));
-
-    // Filter the on-disk media items to only those in this channel
-    const allItems = scanMediaDir();
-    return allItems.filter((item) => channelPaths.has(item.path));
+    return (data as MediaRow[])
+      .map(rowToItem)
+      .filter((item) => !item.isGenerated)
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   } catch (e) {
     console.error("getChannelContent: error:", e);
     return [];
@@ -239,8 +283,7 @@ export async function getChannelContent(name: string): Promise<MediaItem[]> {
 
 /**
  * Get all audio items belonging to a channel (uploader name).
- * Cross-references the `media` table with scanAudioDir() so only audio
- * files that still exist on disk are returned.
+ * Queries the `media` table directly.
  */
 export async function getChannelAudio(name: string): Promise<MediaItem[]> {
   const supabase = getReadClient();
@@ -249,14 +292,15 @@ export async function getChannelAudio(name: string): Promise<MediaItem[]> {
   try {
     const { data } = await supabase
       .from("media")
-      .select("file_path")
-      .eq("uploader_name", name);
+      .select("file_path, type, size, storage_key, created_at")
+      .eq("uploader_name", name)
+      .eq("type", "audio");
 
     if (!data || data.length === 0) return [];
 
-    const channelPaths = new Set(data.map((r) => r.file_path));
-    const allAudio = scanAudioDir();
-    return allAudio.filter((item) => channelPaths.has(item.path));
+    return (data as MediaRow[])
+      .map(rowToItem)
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   } catch (e) {
     console.error("getChannelAudio: error:", e);
     return [];
@@ -310,9 +354,9 @@ export interface ChannelStats {
 /**
  * Aggregate stats for a single channel by name.
  *
- * Cross-references the `media` table with scanMediaDir()/scanAudioDir()
- * so counts only include files that still exist on disk. Returns zeroes
- * (and null timestamps) if the channel has no attribution rows.
+ * Queries the `media` table directly (the DB is the source of truth now,
+ * so no disk cross-reference is needed). Returns zeroes (and null
+ * timestamps) if the channel has no attribution rows.
  */
 export async function getChannelStats(name: string): Promise<ChannelStats> {
   const empty: ChannelStats = {
@@ -330,15 +374,10 @@ export async function getChannelStats(name: string): Promise<ChannelStats> {
   try {
     const { data } = await supabase
       .from("media")
-      .select("file_path, views, created_at")
+      .select("file_path, type, views, created_at")
       .eq("uploader_name", name);
 
     if (!data || data.length === 0) return empty;
-
-    // Cross-reference with on-disk media so we don't count files that
-    // were deleted from /media but still have leftover attribution rows.
-    const mediaSet = new Set(scanMediaDir().map((i) => i.path));
-    const audioSet = new Set(scanAudioDir().map((i) => i.path));
 
     let videos = 0;
     let tracks = 0;
@@ -347,12 +386,11 @@ export async function getChannelStats(name: string): Promise<ChannelStats> {
     let latest: number | null = null;
 
     for (const row of data) {
-      const isAudio = audioSet.has(row.file_path);
-      const isVideo = mediaSet.has(row.file_path);
-      if (!isAudio && !isVideo) continue; // file was deleted from disk
-
-      if (isAudio) tracks += 1;
-      if (isVideo) videos += 1;
+      if (row.type === "audio") {
+        tracks += 1;
+      } else {
+        videos += 1;
+      }
       views += typeof row.views === "number" ? row.views : 0;
 
       if (row.created_at) {
@@ -379,9 +417,10 @@ export async function getChannelStats(name: string): Promise<ChannelStats> {
 }
 
 /**
- * Aggregate stats for every channel that has at least one attribution row
- * and at least one file still on disk. Sorted by total views (desc) by
- * default so the directory surfaces the most-watched channels first.
+ * Aggregate stats for every channel that has at least one attribution row.
+ * Queries the `media` table directly (no disk cross-reference needed).
+ * Sorted by total views (desc) by default so the directory surfaces the
+ * most-watched channels first.
  */
 export async function getAllChannelStats(): Promise<ChannelStats[]> {
   const supabase = getReadClient();
@@ -390,7 +429,7 @@ export async function getAllChannelStats(): Promise<ChannelStats[]> {
   try {
     const { data } = await supabase
       .from("media")
-      .select("uploader_name, file_path, views, created_at");
+      .select("uploader_name, file_path, type, views, created_at");
 
     if (!data) return [];
 
@@ -406,15 +445,7 @@ export async function getAllChannelStats(): Promise<ChannelStats[]> {
       }
     >();
 
-    // On-disk sets for cross-reference
-    const mediaSet = new Set(scanMediaDir().map((i) => i.path));
-    const audioSet = new Set(scanAudioDir().map((i) => i.path));
-
     for (const row of data) {
-      const isAudio = audioSet.has(row.file_path);
-      const isVideo = mediaSet.has(row.file_path);
-      if (!isAudio && !isVideo) continue;
-
       let bucket = byChannel.get(row.uploader_name);
       if (!bucket) {
         bucket = {
@@ -427,8 +458,11 @@ export async function getAllChannelStats(): Promise<ChannelStats[]> {
         byChannel.set(row.uploader_name, bucket);
       }
 
-      if (isVideo) bucket.videos.add(row.file_path);
-      if (isAudio) bucket.tracks.add(row.file_path);
+      if (row.type === "audio") {
+        bucket.tracks.add(row.file_path);
+      } else {
+        bucket.videos.add(row.file_path);
+      }
       bucket.views += typeof row.views === "number" ? row.views : 0;
 
       if (row.created_at) {
@@ -467,8 +501,7 @@ export async function getAllChannelStats(): Promise<ChannelStats[]> {
 
 /**
  * Get the most recently uploaded media items (any type) for a channel.
- * Returns MediaItem objects so the caller can render them straight into
- * a grid (with the file already verified to exist on disk).
+ * Returns MediaItem objects built directly from the `media` table.
  */
 export async function getRecentMediaForChannel(
   name: string,
@@ -480,27 +513,17 @@ export async function getRecentMediaForChannel(
   try {
     const { data } = await supabase
       .from("media")
-      .select("file_path, created_at")
+      .select("file_path, type, size, storage_key, created_at")
       .eq("uploader_name", name)
       .order("created_at", { ascending: false })
-      .limit(limit * 3); // over-fetch so we can still return `limit` after disk-filtering
+      .limit(limit);
 
     if (!data || data.length === 0) return [];
 
-    const mediaMap = new Map(scanMediaDir().map((i) => [i.path, i] as const));
-    const audioMap = new Map(scanAudioDir().map((i) => [i.path, i] as const));
-
-    const out: { item: MediaItem; t: number }[] = [];
-    for (const row of data) {
-      const item = mediaMap.get(row.file_path) ?? audioMap.get(row.file_path);
-      if (!item) continue;
-      const t = row.created_at ? new Date(row.created_at).getTime() : 0;
-      out.push({ item, t });
-      if (out.length >= limit) break;
-    }
-
-    out.sort((a, b) => b.t - a.t);
-    return out.map((x) => x.item);
+    return (data as MediaRow[])
+      .map(rowToItem)
+      .sort((a, b) => b.mtime - a.mtime)
+      .slice(0, limit);
   } catch (e) {
     console.error("getRecentMediaForChannel: error:", e);
     return [];

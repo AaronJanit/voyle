@@ -1,35 +1,56 @@
 // Voyle — media list + upload API
-// GET  /api/media → returns JSON array of all media items in /media folder.
-// POST /api/media → accepts multipart file upload(s), saves to /media folder.
+// GET  /api/media → returns JSON array of all media items from the DB.
+// POST /api/media → accepts multipart file upload(s), saves to Cloudflare R2.
 //
-// Defense-in-depth: even though src/proxy.ts gates these routes, we re-check
-// the auth cookie here so media stays protected if the middleware is ever
-// misconfigured, bypassed, or refactored.
+// GET is public (media is served from R2 without auth).
+// POST requires auth (uploads must be from a logged-in user).
 
 import { NextRequest, NextResponse } from "next/server";
 import { scanMediaDir, classifyExtension } from "@/lib/media";
 import { COOKIE_NAME, isValidAuthToken } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/user";
 import { recordUpload } from "@/lib/channel";
-import { writeFile, mkdir, stat } from "node:fs/promises";
-import { join, extname, basename } from "node:path";
+import { uploadToR2, headR2Object } from "@/lib/r2";
+import { extname, basename } from "node:path";
 import { randomBytes } from "node:crypto";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
-export async function GET(request: NextRequest) {
-  // Defense-in-depth: require a valid auth cookie regardless of middleware.
-  const token = request.cookies.get(COOKIE_NAME)?.value;
-  if (!isValidAuthToken(token)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+// MIME type map for R2 uploads
+const MIME_TYPES: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".avif": "image/avif",
+  ".bmp": "image/bmp",
+  ".tiff": "image/tiff",
+  ".gif": "image/gif",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".mov": "video/quicktime",
+  ".avi": "video/x-msvideo",
+  ".mkv": "video/x-matroska",
+  ".m4v": "video/x-m4v",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".ogg": "audio/ogg",
+  ".m4a": "audio/mp4",
+  ".flac": "audio/flac",
+  ".aac": "audio/aac",
+};
 
-  const items = scanMediaDir();
-  return NextResponse.json(items);
+export async function GET() {
+  const items = await scanMediaDir();
+  return NextResponse.json(items, {
+    headers: {
+      "Cache-Control": "public, max-age=30, s-maxage=300, stale-while-revalidate=600",
+    },
+  });
 }
 
 export async function POST(request: NextRequest) {
-  // Defense-in-depth: require a valid auth cookie regardless of middleware.
+  // Uploads require auth — only logged-in users can upload.
   const token = request.cookies.get(COOKIE_NAME)?.value;
   if (!isValidAuthToken(token)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -58,9 +79,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const mediaDir = join(process.cwd(), "media");
-  await mkdir(mediaDir, { recursive: true });
-
   const saved: string[] = [];
   const errors: { name: string; error: string }[] = [];
 
@@ -71,28 +89,31 @@ export async function POST(request: NextRequest) {
     }
 
     const ext = extname(file.name).toLowerCase();
-    if (!classifyExtension(ext)) {
+    const type = classifyExtension(ext);
+    if (!type) {
       errors.push({ name: file.name, error: "Unsupported file type" });
       continue;
     }
 
-    // De-duplicate filename: append short random suffix if it already exists.
+    // De-duplicate filename: append short random suffix if it already exists in R2.
     const base = basename(file.name, ext);
     let filename = file.name;
     let attempts = 0;
     while (attempts < 100) {
-      const exists = await stat(join(mediaDir, filename)).then(
-        () => true,
-        () => false
-      );
-      if (!exists) break;
+      const exists = await headR2Object(filename);
+      if (exists === null) break;
       const suffix = randomBytes(3).toString("hex");
       filename = `${base}-${suffix}${ext}`;
       attempts++;
     }
 
+    const contentType = MIME_TYPES[ext] || "application/octet-stream";
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(join(mediaDir, filename), buffer);
+    const ok = await uploadToR2(filename, buffer, contentType);
+    if (!ok) {
+      errors.push({ name: file.name, error: "Failed to upload to R2" });
+      continue;
+    }
     saved.push(filename);
   }
 
@@ -100,7 +121,18 @@ export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (user) {
     for (const filename of saved) {
-      await recordUpload(filename, user.email, user.name, title ?? undefined);
+      const ext = extname(filename).toLowerCase();
+      const type = classifyExtension(ext);
+      const stat = await headR2Object(filename);
+      await recordUpload(
+        filename,
+        user.email,
+        user.name,
+        title ?? undefined,
+        type ?? undefined,
+        stat ?? undefined,
+        filename
+      );
     }
   }
 

@@ -116,11 +116,7 @@ function ToggleButton({
 function EmptyHint() {
   return (
     <p className="text-sm text-[color:var(--yt-text-secondary)] mt-4 max-w-2xl">
-      Drop photos, gifs, and videos into the{" "}
-      <code className="bg-[color:var(--yt-chip)] px-1.5 py-0.5 rounded">
-        /media
-      </code>{" "}
-      folder, or use the upload button above.
+      No media yet. Use the upload button above to add photos, gifs, and videos.
     </p>
   );
 }

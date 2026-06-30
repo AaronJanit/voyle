@@ -15,6 +15,7 @@ import { createClient } from "@supabase/supabase-js";
 export interface CurrentUser {
   email: string;
   name: string;
+  isAdmin: boolean;
 }
 
 /** Get the current logged-in user from the auth cookie + Supabase users table. */
@@ -48,5 +49,9 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     }
   }
 
-  return { email: data.email, name: data.name };
+  return {
+    email: data.email,
+    name: data.name,
+    isAdmin: data.is_admin === true,
+  };
 }

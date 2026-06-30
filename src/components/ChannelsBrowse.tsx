@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChannelInfo, FileAttribution } from "@/lib/channel";
-import { MediaItem } from "@/lib/media";
+import { MediaItem, mediaUrl } from "@/lib/media";
 import type { CompactStats } from "@/lib/channel-stats";
 
 /* ChannelsBrowse — YouTube-style directory of every channel on the site.
@@ -287,7 +287,7 @@ function PreviewTile({
     <div className="relative w-full h-full bg-[color:var(--yt-hover)] overflow-hidden">
       {item.type === "video" ? (
         <video
-          src={`/api/media/file/${item.path}`}
+          src={`mediaUrl(item.path)`}
           className="w-full h-full object-cover"
           muted
           playsInline
@@ -295,7 +295,7 @@ function PreviewTile({
         />
       ) : (
         <img
-          src={`/api/media/file/${item.path}`}
+          src={`mediaUrl(item.path)`}
           alt={item.name}
           loading={priority ? "eager" : "lazy"}
           className="w-full h-full object-cover"

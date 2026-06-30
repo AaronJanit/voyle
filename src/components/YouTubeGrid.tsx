@@ -1,6 +1,6 @@
 "use client";
 
-import { MediaItem } from "@/lib/media";
+import { MediaItem, mediaUrl } from "@/lib/media";
 import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { Upload } from "lucide-react";
@@ -265,7 +265,7 @@ function VideoCard({
       >
         {item.type === "video" ? (
           <video
-            src={`/api/media/file/${item.path}`}
+            src={`mediaUrl(item.path)`}
             muted
             playsInline
             preload="metadata"
@@ -273,7 +273,7 @@ function VideoCard({
           />
         ) : (
           <img
-            src={`/api/media/file/${item.path}`}
+            src={`mediaUrl(item.path)`}
             alt={item.name}
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"

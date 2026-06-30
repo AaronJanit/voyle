@@ -1,6 +1,6 @@
 "use client";
 
-import { MediaItem } from "@/lib/media";
+import { MediaItem, mediaUrl } from "@/lib/media";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface LightboxProps {
@@ -78,7 +78,7 @@ export default function Lightbox({
       >
         {item.type === "video" ? (
           <video
-            src={`/api/media/file/${item.path}`}
+            src={`mediaUrl(item.path)`}
             className="max-w-full max-h-[88vh] rounded-lg"
             controls
             autoPlay
@@ -90,7 +90,7 @@ export default function Lightbox({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
             </svg>
             <audio
-              src={`/api/media/file/${item.path}`}
+              src={`mediaUrl(item.path)`}
               controls
               autoPlay
               className="w-80"
@@ -98,7 +98,7 @@ export default function Lightbox({
           </div>
         ) : (
           <img
-            src={`/api/media/file/${item.path}`}
+            src={`mediaUrl(item.path)`}
             alt={item.name}
             className="max-w-full max-h-[88vh] object-contain"
           />

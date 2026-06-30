@@ -9,6 +9,6 @@ import { scanMediaDir } from "@/lib/media";
 export const dynamic = "force-dynamic";
 
 export default async function ShortsRoute() {
-  const items = scanMediaDir();
+  const items = await scanMediaDir();
   return <ShortsPage items={items} />;
 }

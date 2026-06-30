@@ -1,6 +1,6 @@
 "use client";
 
-import { MediaItem } from "@/lib/media";
+import { MediaItem, mediaUrl } from "@/lib/media";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight, Heart, ThumbsDown, Volume2, VolumeX, Shuffle } from "lucide-react";
 
@@ -75,7 +75,7 @@ export default function ShortsPage({ items }: Props) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-56px)] text-[color:var(--yt-text-secondary)]">
         <p className="text-lg">No media to show</p>
-        <p className="text-sm mt-1">Drop files into /media to get started.</p>
+        <p className="text-sm mt-1">Upload some videos to get started.</p>
       </div>
     );
   }
@@ -258,7 +258,7 @@ function ShortSlide({
         {item.type === "video" ? (
           <video
             ref={videoRef}
-            src={`/api/media/file/${item.path}`}
+            src={`mediaUrl(item.path)`}
             className="max-h-full max-w-full object-contain"
             playsInline
             loop={false}
@@ -266,7 +266,7 @@ function ShortSlide({
           />
         ) : (
           <img
-            src={`/api/media/file/${item.path}`}
+            src={`mediaUrl(item.path)`}
             alt={item.name}
             className="max-h-full max-w-full object-contain"
             draggable={false}

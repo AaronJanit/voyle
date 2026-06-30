@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, MessageSquare, Clapperboard, MessageCircle, Play, Music, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Home, Sparkles, MessageSquare, Clapperboard, MessageCircle, Play, Music, Users, Shield } from "lucide-react";
 import { useSidebar } from "./SidebarContext";
 
 interface NavItem {
@@ -29,9 +30,25 @@ const CREATE_NAV: NavItem[] = [
   { href: "/channel", label: "My Channel", icon: <Clapperboard className="w-6 h-6 shrink-0" />, tag: "Active" },
 ];
 
+const ADMIN_NAV: NavItem[] = [
+  { href: "/admin", label: "Admin", icon: <Shield className="w-6 h-6 shrink-0" /> },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { collapsed } = useSidebar();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Fetch current user to check admin status (like NavBar does).
+  useEffect(() => {
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const user = (data as { user?: { isAdmin?: boolean } } | null)?.user;
+        if (user?.isAdmin) setIsAdmin(true);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <aside
@@ -58,6 +75,17 @@ export default function Sidebar() {
           <SidebarLink key={item.label} item={item} pathname={pathname} collapsed={collapsed} />
         ))}
       </ul>
+      {isAdmin && (
+        <>
+          <div className="my-2 border-t border-[color:var(--yt-border)]" />
+          <SectionLabel label="Admin" collapsed={collapsed} />
+          <ul className="space-y-1">
+            {ADMIN_NAV.map((item) => (
+              <SidebarLink key={item.label} item={item} pathname={pathname} collapsed={collapsed} />
+            ))}
+          </ul>
+        </>
+      )}
     </aside>
   );
 }

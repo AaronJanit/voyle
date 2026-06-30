@@ -132,6 +132,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
+  // --- Step 1b: approval check -----------------------------------------
+  // The email exists in the users table, but if allowed = false the account
+  // is still pending approval. Reject without triggering lockdown (this
+  // isn't an attack — just an unapproved account).
+  if (data.allowed === false) {
+    return NextResponse.json(
+      { error: "Account pending approval" },
+      { status: 403 }
+    );
+  }
+
   // --- Step 2: passcode check -------------------------------------------
   const expectedCode = process.env.AUTH_CODE;
   if (!expectedCode) {

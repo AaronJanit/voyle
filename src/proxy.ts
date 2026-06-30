@@ -19,7 +19,7 @@ export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/api/media"];
 
 // --- Lockdown cache -------------------------------------------------------
 // Edge function isolates persist module-level state across requests within

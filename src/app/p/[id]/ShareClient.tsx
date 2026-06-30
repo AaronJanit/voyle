@@ -1,6 +1,6 @@
 "use client";
 
-import { MediaItem } from "@/lib/media";
+import { MediaItem, mediaUrl } from "@/lib/media";
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, Link as LinkIcon } from "lucide-react";
 
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function ShareClient({ item, origin }: Props) {
-  const mediaUrl = `${origin}/api/media/file/${item.path}`;
+  const mediaUrlStr = mediaUrl(item.path);
   const pageUrl = `${origin}/p/${encodeURIComponent(item.path)}`;
   const embedUrl = `${origin}/embed/${encodeURIComponent(item.path)}`;
 
@@ -65,7 +65,7 @@ export default function ShareClient({ item, origin }: Props) {
         <div className="max-w-5xl w-full flex flex-col items-center">
           {item.type === "video" ? (
             <video
-              src={mediaUrl}
+              src={mediaUrlStr}
               controls
               autoPlay
               playsInline
@@ -74,7 +74,7 @@ export default function ShareClient({ item, origin }: Props) {
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={mediaUrl}
+              src={mediaUrlStr}
               alt={item.name}
               className="max-w-full max-h-[70vh] object-contain rounded-[18px] shadow-2xl"
             />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MediaItem } from "@/lib/media";
+import { MediaItem, mediaUrl } from "@/lib/media";
 import { FileAttribution } from "@/lib/channel";
 import { StreamLink } from "@/lib/shmili-stream";
 import ShmiliStreamer from "@/components/ShmiliStreamer";
@@ -32,7 +32,7 @@ export default function MuzicClient({
   const tracks = audioItems.map((item) => ({
     item,
     attribution: attribution.get(item.path),
-    url: `/api/media/file/${item.path}`,
+    url: `mediaUrl(item.path)`,
   }));
 
   const [currentIndex, setCurrentIndex] = useState(0);

@@ -97,7 +97,7 @@ export default function GenerateContent() {
 
       const data: { image?: string; mode?: string; error?: string } = await res.json();
 
-      if (res.ok) {
+      if (res.ok && data.image) {
         setGallery((prev) => [
           {
             image: data.image,

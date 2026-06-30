@@ -3,14 +3,15 @@
 -- Tracks which user uploaded/generated each file in /media so the
 -- YouTube-style grid can show real channel names instead of fake ones.
 --
--- The file_path column stores the relative path inside /media (matching
--- MediaItem.path from src/lib/media.ts). uploader_email is the stable
--- identity key (FK to users.email conceptually); uploader_name is
+-- File bytes live in the Supabase Storage bucket "media" (public).
+-- The file_path column stores the relative path (the Storage object key,
+-- matching MediaItem.path from src/lib/media.ts). uploader_email is the
+-- stable identity key (FK to users.email conceptually); uploader_name is
 -- denormalized for quick display lookups without a join.
 
 CREATE TABLE IF NOT EXISTS media (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  file_path TEXT NOT NULL UNIQUE,   -- relative path (R2 object key)
+  file_path TEXT NOT NULL UNIQUE,   -- relative path (Storage object key)
   uploader_email TEXT NOT NULL,    -- stable identity (users.email)
   uploader_name TEXT NOT NULL,     -- display name (e.g. "Aaron")
   title TEXT,                       -- optional custom title (null = filename)
@@ -18,7 +19,7 @@ CREATE TABLE IF NOT EXISTS media (
   created_at TIMESTAMPTZ DEFAULT now(),
   type TEXT NOT NULL DEFAULT 'photo',  -- "photo" | "gif" | "video" | "audio"
   size BIGINT NOT NULL DEFAULT 0,      -- file size in bytes
-  storage_key TEXT                     -- R2 object key (same as file_path for new uploads)
+  storage_key TEXT                     -- Storage object key (same as file_path for new uploads)
 );
 
 -- Add columns if the table already exists without them (idempotent)

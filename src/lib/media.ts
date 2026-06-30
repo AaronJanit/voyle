@@ -1,6 +1,6 @@
 // Voyle — media library
 // The Supabase `media` table is the source of truth for the media list.
-// File bytes live in Cloudflare R2; this module queries the DB for
+// File bytes live in Supabase Storage; this module queries the DB for
 // metadata and builds MediaItem objects for the UI.
 //
 // The table has columns: file_path, type, size, storage_key, uploader_*,
@@ -9,14 +9,14 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { basename } from "node:path";
-import { r2Url } from "@/lib/r2";
+import { storageUrl } from "@/lib/storage";
 
 export type MediaType = "photo" | "gif" | "video" | "audio";
 
 export interface MediaItem {
   id: string;
   name: string;
-  path: string; // R2 object key (relative path)
+  path: string; // Storage object key (relative path)
   type: MediaType;
   size: number;
   isGenerated: boolean; // true if AI-generated (filename starts with "gen-")
@@ -38,11 +38,11 @@ export function classifyExtension(ext: string): MediaType | null {
 }
 
 /**
- * Build the public R2 URL for a media item path.
+ * Build the public Supabase Storage URL for a media item path.
  * Use this everywhere a media URL is needed instead of /api/media/file/.
  */
 export function mediaUrl(path: string): string {
-  return r2Url(path);
+  return storageUrl(path);
 }
 
 // --- DB client -----------------------------------------------------------

@@ -4,7 +4,7 @@ A personal photo catalog + AI chatbot site. Drop media files into a folder, get 
 
 ## Features
 
-- **Photo catalog** — media stored in Cloudflare R2, metadata in Supabase. Displays them in a responsive masonry grid with a fullscreen lightbox (keyboard navigation, video playback).
+- **Photo catalog** — media stored in Supabase Storage, metadata in Supabase Postgres. Displays them in a responsive masonry grid with a fullscreen lightbox (keyboard navigation, video playback).
 - **AI chatbot** — floating chat widget powered by Ollama Cloud. Streaming responses with a custom funny personality. Conversation history saved to Supabase.
 - **Passcode auth** — single hardcoded passcode (`613`) with a signed HttpOnly cookie. No user accounts.
 - **Shareable photos** — every photo has a public `/p/[id]` URL with full Open Graph / Twitter Card metadata, plus an oEmbed endpoint for rich previews on Discord, Slack, Mastodon, Notion, etc.
@@ -32,14 +32,13 @@ Required variables (see `.env.example` for the full list):
 - `AUTH_CODE` — the passcode to access the site (default: `613`)
 - `AUTH_SECRET` — random string for signing cookies (change this!)
 - `OLLAMA_BASE_URL`, `OLLAMA_API_KEY`, `OLLAMA_MODEL` — Ollama Cloud chatbot
-- `NEXT_PUBLIC_R2_PUBLIC_URL` — public base URL for R2 media objects
-- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` — R2 S3 fallback (local dev only; production uses a native R2 binding)
+- `SUPABASE_STORAGE_BUCKET` — Supabase Storage bucket name for media files (defaults to `media`)
 - `IMAGE_GEN_API_URL`, `IMAGE_GEN_API_KEY` — image generation Worker
 
 ### 3. Set up the database
 
 Run the SQL files in `supabase/` via the Supabase SQL Editor (in order):
-- `users.sql`, `media.sql`, `system_prompt.sql`, `lockdown.sql`, `login_attempts.sql`, `shmili_stream.sql`, `chat.sql`
+- `users.sql`, `media.sql`, `system_prompt.sql`, `lockdown.sql`, `login_attempts.sql`, `chat.sql`
 
 ### 4. Run
 
@@ -64,7 +63,7 @@ src/
       auth/me/route.ts       # GET → current user
       chat/route.ts          # POST → stream Ollama Cloud response
       generate/route.ts      # POST → image generation (Workers AI)
-      media/route.ts         # GET list / POST upload to R2
+      media/route.ts         # GET list / POST upload to Supabase Storage
       oembed/route.ts        # oEmbed endpoint
       og/route.ts            # dynamic OG image
     (app)/                   # authenticated app routes
@@ -73,7 +72,7 @@ src/
       channels/              # all channels
       chat/                  # full-page chat
       generate/              # image generation UI
-      muzic/                 # Shmili Streamer (YouTube player)
+      muzic/                 # music player (uploaded tracks)
       shorts/                # shorts view
       spencer/               # spencer view
     embed/[id]/page.tsx      # embeddable iframe viewer
@@ -85,17 +84,16 @@ src/
     auth.ts                  # HMAC token sign/verify
     chat-store.ts            # Supabase-backed chat persistence
     channel.ts               # channel attribution (Supabase)
-    media.ts                 # media library (Supabase + R2)
+    media.ts                 # media library (Supabase Postgres + Storage)
     ollama.ts                # Ollama Cloud streaming client
     prompts.ts               # chatbot system prompt (Supabase)
-    r2.ts                    # R2 client (native binding + S3 fallback)
-    shmili-stream.ts         # YouTube playlist (Supabase)
+    storage.ts               # Supabase Storage client (upload, head, URL)
     user.ts                  # current user lookup
   proxy.ts                   # auth gate + lockdown (Next.js proxy)
   utils/supabase/            # Supabase SSR clients
 supabase/                    # SQL table definitions + RLS policies
 cloudflare/worker.js         # standalone image-gen Worker (Workers AI)
-wrangler.jsonc               # Cloudflare Workers config (R2 binding, etc)
+wrangler.jsonc               # Cloudflare Workers config
 open-next.config.ts          # OpenNext adapter config
 ```
 
@@ -127,7 +125,7 @@ $pem | Set-Content -Path techloq-ca.pem -Encoding ASCII
 - Next.js 16 (App Router, Turbopack)
 - TypeScript + Tailwind CSS v4
 - Supabase (Postgres) — all metadata: users, media, chat history, prompts, lockdown
-- Cloudflare R2 — media file storage (native binding in production)
+- Supabase Storage — media file storage (public bucket)
 - Ollama Cloud (native `/api/chat` streaming API)
 - Cloudflare Workers AI — image generation (separate Worker)
 
@@ -161,11 +159,11 @@ npm run deploy       # builds + deploys to Cloudflare Workers
 
 Set server-side secrets via `wrangler secret put <NAME>` or the dashboard:
 `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `AUTH_SECRET`,
-`AUTH_CODE`, `OLLAMA_*`, `IMAGE_GEN_*`, `R2_PUBLIC_URL`.
+`AUTH_CODE`, `OLLAMA_*`, `IMAGE_GEN_*`.
 
 Set `NEXT_PUBLIC_*` vars as **Workers Build build variables** (they're inlined
 into the client bundle at build time): `NEXT_PUBLIC_SUPABASE_URL`,
-`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_R2_PUBLIC_URL`.
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
-R2 is accessed via a native binding (`R2_BUCKET` in `wrangler.jsonc`) — no
-access keys needed in production.
+Media files are stored in Supabase Storage (public bucket `media`) — no
+Cloudflare-specific storage bindings are needed.

@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { MediaItem, mediaUrl } from "@/lib/media";
 import { FileAttribution } from "@/lib/channel";
-import { StreamLink } from "@/lib/shmili-stream";
-import ShmiliStreamer from "@/components/ShmiliStreamer";
 import TrackList from "@/components/TrackList";
 import MusicPlayer from "@/components/MusicPlayer";
 import Link from "next/link";
@@ -12,21 +10,16 @@ import Link from "next/link";
 interface MuzicClientProps {
   audioItems: MediaItem[];
   attribution: Map<string, FileAttribution>;
-  streamLinks: StreamLink[];
 }
 
-/* Muzic page — two sections:
- *   1. Uploaded audio tracks — YouTube Music-style track list with a
- *      sticky "now playing" bar at the bottom featuring cover art,
- *      gradient backgrounds, custom transport, scrubber, volume,
- *      shuffle/repeat, and modern animated effects.
- *   2. Shmili Streamer — YouTube playlist player with auto-advance,
- *      autoplay, repeat, thumbnails, search, and keyboard shortcuts.
+/* Muzic page — uploaded audio tracks in a YouTube Music-style track list
+ * with a sticky "now playing" bar at the bottom featuring cover art,
+ * gradient backgrounds, custom transport, scrubber, volume,
+ * shuffle/repeat, and modern animated effects.
  */
 export default function MuzicClient({
   audioItems,
   attribution,
-  streamLinks,
 }: MuzicClientProps) {
   // Build the track list once
   const tracks = audioItems.map((item) => ({
@@ -53,7 +46,7 @@ export default function MuzicClient({
         </Link>
       </div>
 
-      {/* Tracks section (now above the streamer) */}
+      {/* Tracks section */}
       <section className="mb-10">
         <h2 className="text-lg font-semibold text-[color:var(--yt-text)] mb-4">
           Tracks
@@ -82,19 +75,6 @@ export default function MuzicClient({
             </div>
           </>
         )}
-      </section>
-
-      {/* Shmili Streamer section */}
-      <section className="mb-10">
-        <h2 className="text-lg font-semibold text-[color:var(--yt-text)] mb-3">
-          Shmili Streamer
-        </h2>
-        <ShmiliStreamer
-          links={streamLinks.map((l) => ({
-            youtubeId: l.youtubeId,
-            title: l.title,
-          }))}
-        />
       </section>
     </div>
   );

@@ -131,13 +131,13 @@ function getWriteClient() {
  * Best-effort: logs errors but does not throw, so a failed attribution
  * write never blocks a successful upload.
  *
- * @param filePath   R2 object key (relative path)
+ * @param filePath   Storage object key (relative path)
  * @param email      uploader email
  * @param name       uploader display name
  * @param title      optional custom title
  * @param type       media type ("photo"|"gif"|"video"|"audio")
  * @param size       file size in bytes
- * @param storageKey R2 storage key (defaults to filePath if omitted)
+ * @param storageKey Storage key (defaults to filePath if omitted)
  */
 export async function recordUpload(
   filePath: string,
